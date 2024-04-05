@@ -600,11 +600,13 @@ if($ticket->isOverdue())
                       <?php } ?>
                 </tr>
                 <tr>
-                    <td width="160">
+                    <th width="160">
                         <?php echo __('Textbox Name');?>:
-                    </td>
+                    </th>
                     <td>
-                        <?php echo isset($info['textbox_name']) ? Format::htmlchars($info['textbox_name']) : ''; ?>
+                        <?php 
+                            echo Format::htmlchars($ticket->getTextboxname());
+                        ?>
                     </td>
                 </tr>
                 <?php

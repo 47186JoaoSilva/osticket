@@ -214,7 +214,7 @@ implements RestrictedAccess, Threadable, Searchable {
     var $lastuserrespondent;
     var $_children;
     
-    var $textbox_name;
+    //var $textbox_name;
 
     function loadDynamicData($force=false) {
         if (!isset($this->_answers) || $force) {
@@ -231,6 +231,10 @@ implements RestrictedAccess, Threadable, Searchable {
             }
         }
         return $this->_answers;
+    }
+    
+    function getTextboxname() {
+        return $this->textbox_name;
     }
 
     function getAnswer($field, $form=null) {
@@ -4362,6 +4366,9 @@ implements RestrictedAccess, Threadable, Searchable {
 
         //We are ready son...hold on to the rails.
         $number = $topic ? $topic->getNewTicketNumber() : $cfg->getNewTicketNumber();
+        
+        $textbox_name = isset($vars['textbox_name']) ? $vars['textbox_name'] : "";
+        
         $ticket = new static(array(
             'created' => SqlFunction::NOW(),
             'lastupdate' => SqlFunction::NOW(),
@@ -4371,6 +4378,7 @@ implements RestrictedAccess, Threadable, Searchable {
             'topic_id' => $topicId,
             'ip_address' => $ipaddress,
             'source' => $source,
+            'textbox_name' => $textbox_name,
         ));
 
         if (isset($vars['emailId']) && $vars['emailId'])
@@ -4381,7 +4389,10 @@ implements RestrictedAccess, Threadable, Searchable {
             $ticket->duedate = date('Y-m-d G:i',
                 Misc::dbtime($vars['duedate']));
 
-
+        if (isset($vars['textbox_name'])) {
+            $ticket->textbox_name = $vars['textbox_name'];
+        }
+      
         if (!$ticket->save())
             return null;
         if (!($thread = TicketThread::create($ticket->getId())))
@@ -4543,10 +4554,6 @@ implements RestrictedAccess, Threadable, Searchable {
 
         // Update the estimated due date in the database
         $ticket->updateEstDueDate();
-        
-        if (isset($vars['textbox_name'])) {
-            $ticket->setTextboxName($vars['textbox_name']);
-        }
 
         /**********   double check auto-response  ************/
         //Override auto responder if the FROM email is one of the internal emails...loop control.
