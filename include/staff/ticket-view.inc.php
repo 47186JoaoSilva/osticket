@@ -599,6 +599,14 @@ if($ticket->isOverdue())
                            <td><?php echo Format::datetime($ticket->getEstDueDate()); ?></td>
                       <?php } ?>
                 </tr>
+                <tr>
+                    <td width="160">
+                        <?php echo __('Textbox Name');?>:
+                    </td>
+                    <td>
+                        <?php echo isset($info['textbox_name']) ? Format::htmlchars($info['textbox_name']) : ''; ?>
+                    </td>
+                </tr>
                 <?php
                 }else { ?>
                 <tr>

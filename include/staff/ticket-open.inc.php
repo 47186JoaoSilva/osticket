@@ -345,6 +345,12 @@ if ($_POST)
                 </select>&nbsp;<span class='error'>&nbsp;<?php echo $errors['assignId']; ?></span>
             </td>
         </tr>
+        <tr>
+            <td width="160"><?php echo __('Text box');?>:</td>
+            <td>
+            <input type="text" name="textbox_name" value="<?php echo htmlspecialchars($info['textbox_name']); ?>">
+            </td>
+        </tr>
         <?php } ?>
         </tbody>
         <tbody id="dynamic-form">

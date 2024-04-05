@@ -213,6 +213,8 @@ implements RestrictedAccess, Threadable, Searchable {
     var $lastrespondent;
     var $lastuserrespondent;
     var $_children;
+    
+    var $textbox_name;
 
     function loadDynamicData($force=false) {
         if (!isset($this->_answers) || $force) {
@@ -1368,6 +1370,11 @@ implements RestrictedAccess, Threadable, Searchable {
 
 
     /* -------------------- Setters --------------------- */
+    public function setTextboxName($textboxName) {
+        $this->textbox_name = $textboxName;
+        return $this->save();
+    }
+    
     public function setFlag($flag, $val) {
 
         if ($val)
@@ -4536,6 +4543,10 @@ implements RestrictedAccess, Threadable, Searchable {
 
         // Update the estimated due date in the database
         $ticket->updateEstDueDate();
+        
+        if (isset($vars['textbox_name'])) {
+            $ticket->setTextboxName($vars['textbox_name']);
+        }
 
         /**********   double check auto-response  ************/
         //Override auto responder if the FROM email is one of the internal emails...loop control.
