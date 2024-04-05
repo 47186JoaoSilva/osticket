@@ -213,8 +213,6 @@ implements RestrictedAccess, Threadable, Searchable {
     var $lastrespondent;
     var $lastuserrespondent;
     var $_children;
-    
-    //var $textbox_name;
 
     function loadDynamicData($force=false) {
         if (!isset($this->_answers) || $force) {
