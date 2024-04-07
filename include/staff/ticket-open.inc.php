@@ -348,7 +348,19 @@ if ($_POST)
         <tr>
             <td width="160"><?php echo __('Text box');?>:</td>
             <td>
-            <input type="text" name="textbox_name" value="<?php echo htmlspecialchars($info['textbox_name']); ?>">
+                <input type="text" name="textbox_name" value="<?php echo htmlspecialchars($info['textbox_name']); ?>">
+            </td>
+        </tr>
+        <tr>
+            <td width="160">
+                <?php echo __('Combo Box');?>:
+            </td>
+            <td>
+                <select name="combo_option">
+                    <option value="option1" <?php if ($info['combo_option'] === "option1") echo "selected"; ?>>Option 1</option>
+                    <option value="option2" <?php if ($info['combo_option'] === "option2") echo "selected"; ?>>Option 2</option>
+                    <option value="option3" <?php if ($info['combo_option'] === "option3") echo "selected"; ?>>Option 3</option>
+                </select>
             </td>
         </tr>
         <?php } ?>

@@ -599,16 +599,6 @@ if($ticket->isOverdue())
                            <td><?php echo Format::datetime($ticket->getEstDueDate()); ?></td>
                       <?php } ?>
                 </tr>
-                <tr>
-                    <th width="160">
-                        <?php echo __('Textbox Name');?>:
-                    </th>
-                    <td>
-                        <?php 
-                            echo Format::htmlchars($ticket->getTextboxname());
-                        ?>
-                    </td>
-                </tr>
                 <?php
                 }else { ?>
                 <tr>
@@ -618,6 +608,16 @@ if($ticket->isOverdue())
                 <?php
                 }
                 ?>
+                <tr>
+                    <th width="160">
+                        <?php echo __('Textbox Name');?>:
+                    </th>
+                    <td>
+                        <?php 
+                            echo Format::htmlchars($ticket->getTextboxname());
+                        ?>
+                    </td>
+                </tr>                
             </table>
         </td>
         <td width="50%">
@@ -648,6 +648,16 @@ if($ticket->isOverdue())
                     <th nowrap><?php echo __('Last Response');?>:</th>
                     <td><?php echo Format::datetime($ticket->getLastRespDate()); ?></td>
                 </tr>
+                <tr>
+                    <th nowrap>
+                        <?php echo __('Combo Box');?>:
+                    </th>
+                    <td>
+                        <?php 
+                            echo Format::htmlchars($ticket->getComboboxValue());
+                        ?>
+                    </td>
+                </tr> 
             </table>
         </td>
     </tr>

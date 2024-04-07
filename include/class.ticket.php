@@ -234,6 +234,10 @@ implements RestrictedAccess, Threadable, Searchable {
     function getTextboxname() {
         return $this->textbox_name;
     }
+    
+    function getComboboxValue() {
+        return $this->combo_option;
+    }
 
     function getAnswer($field, $form=null) {
         // TODO: Prefer CDATA ORM relationship if already loaded
@@ -4377,6 +4381,7 @@ implements RestrictedAccess, Threadable, Searchable {
             'ip_address' => $ipaddress,
             'source' => $source,
             'textbox_name' => $textbox_name,
+            'combo_option' => $combo_option,
         ));
 
         if (isset($vars['emailId']) && $vars['emailId'])
@@ -4389,6 +4394,10 @@ implements RestrictedAccess, Threadable, Searchable {
 
         if (isset($vars['textbox_name'])) {
             $ticket->textbox_name = $vars['textbox_name'];
+        }
+        
+        if (isset($vars['combo_option'])) {
+            $ticket->combo_option = $vars['combo_option'];
         }
       
         if (!$ticket->save())
