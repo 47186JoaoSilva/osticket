@@ -238,6 +238,10 @@ implements RestrictedAccess, Threadable, Searchable {
     function getComboboxValue() {
         return $this->combo_option;
     }
+    
+    function getRadioButton1Value(){
+        return $this->radio_option1;
+    }
 
     function getAnswer($field, $form=null) {
         // TODO: Prefer CDATA ORM relationship if already loaded
@@ -4382,6 +4386,7 @@ implements RestrictedAccess, Threadable, Searchable {
             'source' => $source,
             'textbox_name' => $textbox_name,
             'combo_option' => $combo_option,
+            'radio_option1' => $radio_option1,
         ));
 
         if (isset($vars['emailId']) && $vars['emailId'])
@@ -4399,7 +4404,11 @@ implements RestrictedAccess, Threadable, Searchable {
         if (isset($vars['combo_option'])) {
             $ticket->combo_option = $vars['combo_option'];
         }
-      
+        
+        if (isset($vars['radio_option1'])) {
+            $ticket->radio_option1 = $vars['radio_option1'];
+        }
+        
         if (!$ticket->save())
             return null;
         if (!($thread = TicketThread::create($ticket->getId())))

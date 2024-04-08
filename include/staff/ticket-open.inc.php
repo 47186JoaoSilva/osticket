@@ -352,15 +352,22 @@ if ($_POST)
             </td>
         </tr>
         <tr>
-            <td width="160">
-                <?php echo __('Combo Box');?>:
-            </td>
+            <td width="160"><?php echo __('Combo Box');?>:</td>
             <td>
                 <select name="combo_option">
                     <option value="option1" <?php if ($info['combo_option'] === "option1") echo "selected"; ?>>Option 1</option>
                     <option value="option2" <?php if ($info['combo_option'] === "option2") echo "selected"; ?>>Option 2</option>
                     <option value="option3" <?php if ($info['combo_option'] === "option3") echo "selected"; ?>>Option 3</option>
                 </select>
+            </td>
+        </tr>
+        <tr>
+            <td width="160"><?php echo __('Radio Button 1');?>:</td>
+            <td>
+                <input type="radio" id="rb1_opt1" name="radio_option1" value="option1">
+                <label for="rb1_opt1">Option1</label>
+                <input type="radio" id="rb1_opt2" name="radio_option1" value="option2">
+                <label for="rb1_opt2">Option2</label>
             </td>
         </tr>
         <?php } ?>
