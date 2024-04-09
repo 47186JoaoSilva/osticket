@@ -239,8 +239,12 @@ implements RestrictedAccess, Threadable, Searchable {
         return $this->combo_option;
     }
     
-    function getRadioButton1Value(){
-        return $this->radio_option1;
+    function getRadioButtonValue(){
+        return $this->radio_option;
+    }
+    
+    function getNumericValue(){
+        return $this->numeric_input;
     }
 
     function getAnswer($field, $form=null) {
@@ -4386,7 +4390,8 @@ implements RestrictedAccess, Threadable, Searchable {
             'source' => $source,
             'textbox_name' => $textbox_name,
             'combo_option' => $combo_option,
-            'radio_option1' => $radio_option1,
+            'radio_option' => $radio_option,
+            'numeric_input' => $numeric_input,
         ));
 
         if (isset($vars['emailId']) && $vars['emailId'])
@@ -4405,8 +4410,12 @@ implements RestrictedAccess, Threadable, Searchable {
             $ticket->combo_option = $vars['combo_option'];
         }
         
-        if (isset($vars['radio_option1'])) {
-            $ticket->radio_option1 = $vars['radio_option1'];
+        if (isset($vars['radio_option'])) {
+            $ticket->radio_option = $vars['radio_option'];
+        }
+        
+        if (isset($vars['numeric_input'])) {
+            $ticket->numeric_input = $vars['numeric_input'];
         }
         
         if (!$ticket->save())

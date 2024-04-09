@@ -362,12 +362,26 @@ if ($_POST)
             </td>
         </tr>
         <tr>
-            <td width="160"><?php echo __('Radio Button 1');?>:</td>
+            <td width="160"><?php echo __('Radio Button');?>:</td>
             <td>
-                <input type="radio" id="rb1_opt1" name="radio_option1" value="option1">
-                <label for="rb1_opt1">Option1</label>
-                <input type="radio" id="rb1_opt2" name="radio_option1" value="option2">
-                <label for="rb1_opt2">Option2</label>
+                <label>
+                    <input type="radio" name="radio_option" value="option1">
+                    Option 1
+                </label>
+                <label>
+                    <input type="radio" name="radio_option" value="option2">
+                    Option 2
+                </label>
+                <label>
+                    <input type="radio" name="radio_option" value="option3">
+                    Option 3
+                </label>
+            </td>
+        </tr>
+        <tr>
+            <td width="160"><?php echo __('Numeric input');?>:</td>
+            <td>
+                <input type="number" name="numeric_input" value="<?php echo htmlspecialchars($info['numeric_input']); ?>" min="0">
             </td>
         </tr>
         <?php } ?>

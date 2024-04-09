@@ -617,7 +617,27 @@ if($ticket->isOverdue())
                             echo Format::htmlchars($ticket->getTextboxname());
                         ?>
                     </td>
-                </tr>                
+                </tr>  
+                <tr>
+                    <th width="160">
+                        <?php echo __('Radio Option');?>:
+                    </th>
+                    <td>
+                        <?php 
+                            echo Format::htmlchars($ticket->getRadioButtonValue());
+                        ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th width="160">
+                        <?php echo __('Numeric Input');?>:
+                    </th>
+                    <td>
+                        <?php 
+                            echo Format::htmlchars($ticket->getNumericValue());
+                        ?>
+                    </td>
+                </tr>
             </table>
         </td>
         <td width="50%">
