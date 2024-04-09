@@ -678,6 +678,16 @@ if($ticket->isOverdue())
                         ?>
                     </td>
                 </tr> 
+                <tr>
+                    <th nowrap>
+                        <?php echo __('Email Value');?>:
+                    </th>
+                    <td>
+                        <?php 
+                            echo Format::htmlchars($ticket->getEmailValue());
+                        ?>
+                    </td>
+                </tr> 
             </table>
         </td>
     </tr>

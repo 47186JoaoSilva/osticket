@@ -246,6 +246,10 @@ implements RestrictedAccess, Threadable, Searchable {
     function getNumericValue(){
         return $this->numeric_input;
     }
+    
+    function getEmailValue(){
+        return $this->email_input;
+    }
 
     function getAnswer($field, $form=null) {
         // TODO: Prefer CDATA ORM relationship if already loaded
@@ -4135,8 +4139,9 @@ implements RestrictedAccess, Threadable, Searchable {
                 $fields['deptId']   = array('type'=>'int',  'required'=>0, 'error'=>__('Department selection is required'));
                 $fields['topicId']  = array('type'=>'int',  'required'=>1, 'error'=>__('Help topic selection is required'));
                 $fields['duedate']  = array('type'=>'date', 'required'=>0, 'error'=>__('Invalid date format - must be MM/DD/YY'));
-                $fields['textbox_name']  = array('type'=>'string',  'required'=>1, 'error'=>__('Textbox input is required'));
-                $fields['numeric_input']  = array('type'=>'int',  'required'=>1, 'error'=>__('Numeric input is required'));
+                $fields['textbox_name']  = array('type'=>'string',  'required'=>1, 'error'=>__('Textbox input is a required field'));
+                $fields['numeric_input']  = array('type'=>'int',  'required'=>1, 'error'=>__('Numeric input is a required field'));
+                $fields['email_input']  = array('type'=>'string',  'required'=>1, 'error'=>__('Email input is a required field'));
             case 'api':
                 $fields['source']   = array('type'=>'string', 'required'=>1, 'error'=>__('Indicate ticket source'));
                 break;
@@ -4394,6 +4399,7 @@ implements RestrictedAccess, Threadable, Searchable {
             'combo_option' => $combo_option,
             'radio_option' => $radio_option,
             'numeric_input' => $numeric_input,
+            'email_input' => $email_input,
         ));
 
         if (isset($vars['emailId']) && $vars['emailId'])
@@ -4418,6 +4424,10 @@ implements RestrictedAccess, Threadable, Searchable {
         
         if (isset($vars['numeric_input'])) {
             $ticket->numeric_input = $vars['numeric_input'];
+        }
+        
+        if (isset($vars['email_input'])) {
+            $ticket->email_input = $vars['email_input'];
         }
         
         if (!$ticket->save())

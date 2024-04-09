@@ -388,6 +388,13 @@ if ($_POST)
                 &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['numeric_input']; ?></font>
             </td>
         </tr>
+        <tr>
+            <td width="160" class="required"><?php echo __('Email');?>:</td>
+            <td>
+                <input type="email" name="email_input" value="<?php echo htmlspecialchars($info['email_input']); ?>">
+                &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['email_input']; ?></font>
+            </td>
+        </tr>
         <?php } ?>
         </tbody>
         <tbody id="dynamic-form">
