@@ -4135,6 +4135,8 @@ implements RestrictedAccess, Threadable, Searchable {
                 $fields['deptId']   = array('type'=>'int',  'required'=>0, 'error'=>__('Department selection is required'));
                 $fields['topicId']  = array('type'=>'int',  'required'=>1, 'error'=>__('Help topic selection is required'));
                 $fields['duedate']  = array('type'=>'date', 'required'=>0, 'error'=>__('Invalid date format - must be MM/DD/YY'));
+                $fields['textbox_name']  = array('type'=>'string',  'required'=>1, 'error'=>__('Textbox input is required'));
+                $fields['numeric_input']  = array('type'=>'int',  'required'=>1, 'error'=>__('Numeric input is required'));
             case 'api':
                 $fields['source']   = array('type'=>'string', 'required'=>1, 'error'=>__('Indicate ticket source'));
                 break;

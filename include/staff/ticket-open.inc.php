@@ -346,9 +346,10 @@ if ($_POST)
             </td>
         </tr>
         <tr>
-            <td width="160"><?php echo __('Text box');?>:</td>
+            <td width="160" class="required"><?php echo __('Text box');?>:</td>
             <td>
                 <input type="text" name="textbox_name" value="<?php echo htmlspecialchars($info['textbox_name']); ?>">
+                &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['textbox_name']; ?></font>
             </td>
         </tr>
         <tr>
@@ -379,9 +380,12 @@ if ($_POST)
             </td>
         </tr>
         <tr>
-            <td width="160"><?php echo __('Numeric input');?>:</td>
+            <td width="160" class="required">
+                <?php echo __('Numeric Input'); ?>:
+            </td>
             <td>
-                <input type="number" name="numeric_input" value="<?php echo htmlspecialchars($info['numeric_input']); ?>" min="0">
+                <input type="number" name="numeric_input" value="<?php echo htmlspecialchars($info['numeric_input']); ?>">
+                &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['numeric_input']; ?></font>
             </td>
         </tr>
         <?php } ?>
