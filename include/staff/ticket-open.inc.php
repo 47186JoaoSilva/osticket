@@ -395,6 +395,15 @@ if ($_POST)
                 &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['email_input']; ?></font>
             </td>
         </tr>
+        <tr>
+            <td width="160"><?php echo __('Checkbox');?>:</td>
+            <td>
+                <label>
+                    <input type="checkbox" name="checkbox_option" value="Checkbox Option">
+                    Checkbox Option
+                </label>
+            </td>
+        </tr>
         <?php } ?>
         </tbody>
         <tbody id="dynamic-form">

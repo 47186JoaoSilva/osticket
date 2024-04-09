@@ -250,6 +250,10 @@ implements RestrictedAccess, Threadable, Searchable {
     function getEmailValue(){
         return $this->email_input;
     }
+    
+    function getCheckboxValue(){
+        return $this->checkbox_option;
+    }
 
     function getAnswer($field, $form=null) {
         // TODO: Prefer CDATA ORM relationship if already loaded
@@ -4400,6 +4404,7 @@ implements RestrictedAccess, Threadable, Searchable {
             'radio_option' => $radio_option,
             'numeric_input' => $numeric_input,
             'email_input' => $email_input,
+            'checkbox_option' => $checkbox_option,
         ));
 
         if (isset($vars['emailId']) && $vars['emailId'])
@@ -4428,6 +4433,10 @@ implements RestrictedAccess, Threadable, Searchable {
         
         if (isset($vars['email_input'])) {
             $ticket->email_input = $vars['email_input'];
+        }
+        
+        if (isset($vars['checkbox_option'])) {
+            $ticket->checkbox_option = $vars['checkbox_option'];
         }
         
         if (!$ticket->save())

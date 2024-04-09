@@ -688,6 +688,16 @@ if($ticket->isOverdue())
                         ?>
                     </td>
                 </tr> 
+                <tr>
+                    <th nowrap>
+                        <?php echo __('Checkbox');?>:
+                    </th>
+                    <td>
+                        <?php 
+                            echo Format::htmlchars($ticket->getCheckboxValue());
+                        ?>
+                    </td>
+                </tr> 
             </table>
         </td>
     </tr>
