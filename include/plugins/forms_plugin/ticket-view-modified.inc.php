@@ -608,6 +608,36 @@ if($ticket->isOverdue())
                 <?php
                 }
                 ?>
+                <tr>
+                    <th width="160">
+                        <?php echo __('Textbox Name');?>:
+                    </th>
+                    <td>
+                        <?php 
+                            echo Format::htmlchars($ticket->getTextboxname());
+                        ?>
+                    </td>
+                </tr>  
+                <tr>
+                    <th width="160">
+                        <?php echo __('Radio Option');?>:
+                    </th>
+                    <td>
+                        <?php 
+                            echo Format::htmlchars($ticket->getRadioButtonValue());
+                        ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th width="160">
+                        <?php echo __('Numeric Input');?>:
+                    </th>
+                    <td>
+                        <?php 
+                            echo Format::htmlchars($ticket->getNumericValue());
+                        ?>
+                    </td>
+                </tr>
             </table>
         </td>
         <td width="50%">
@@ -638,6 +668,36 @@ if($ticket->isOverdue())
                     <th nowrap><?php echo __('Last Response');?>:</th>
                     <td><?php echo Format::datetime($ticket->getLastRespDate()); ?></td>
                 </tr>
+                <tr>
+                    <th nowrap>
+                        <?php echo __('Combo Box');?>:
+                    </th>
+                    <td>
+                        <?php 
+                            echo Format::htmlchars($ticket->getComboboxValue());
+                        ?>
+                    </td>
+                </tr> 
+                <tr>
+                    <th nowrap>
+                        <?php echo __('Email Value');?>:
+                    </th>
+                    <td>
+                        <?php 
+                            echo Format::htmlchars($ticket->getEmailValue());
+                        ?>
+                    </td>
+                </tr> 
+                <tr>
+                    <th nowrap>
+                        <?php echo __('Checkbox');?>:
+                    </th>
+                    <td>
+                        <?php 
+                            echo Format::htmlchars($ticket->getCheckboxValue());
+                        ?>
+                    </td>
+                </tr> 
             </table>
         </td>
     </tr>
