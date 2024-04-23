@@ -8,12 +8,6 @@ require_once(INCLUDE_DIR . 'class.dispatcher.php');
 // Define your plugin class
 class FormsPlugin extends Plugin {
     function bootstrap() {
-        //Signal quando o plugin é instalado
-        /*Signal::connect('model.created', array($this, 'replaceTicketOpenFile'));
-        Signal::connect('model.created', array($this, 'replaceTicketViewFile)'));
-        Signal::connect('model.created', array($this, 'replaceClassTicketFile'));
-        Signal::connect('model.created', array($this, 'addColumnsToTable'));*/
-        
         //Signal quando o plugin é ativado ou desativado
         Signal::connect('model.updated', array($this, 'restoreOrReplaceTicketOpenFile'));
         Signal::connect('model.updated', array($this, 'restoreOrReplaceTicketViewFile'));
@@ -24,13 +18,11 @@ class FormsPlugin extends Plugin {
         Signal::connect('model.deleted', array($this, 'restoreTicketOpenFile'));
         Signal::connect('model.deleted', array($this, 'restoreTicketViewFile'));
         Signal::connect('model.deleted', array($this, 'restoreClassTicketFile'));
-        Signal::connect('model.deleted', array($this, 'deleteColumnsFromTable'));
+        Signal::connect('model.deleted', array($this, 'deleteColumnsFromTable'));     
         
-        //$something = $this->isPluginActive();
     }
     
     function restoreOrReplaceTicketOpenFile() {
-        $something = $this->isPluginActive();
         if($this->isPluginActive()== 1) {
             $this->replaceTicketOpenFile();
         }
@@ -67,7 +59,6 @@ class FormsPlugin extends Plugin {
     }
     
     function replaceTicketOpenFile() {
-        $something = $this->isPluginActive();
         $this->replaceFile(INCLUDE_DIR . 'staff/ticket-open.inc.php', 'ticket-open-modified.inc.php');
     }
     
@@ -81,7 +72,6 @@ class FormsPlugin extends Plugin {
     
     // Function to restore the original content of ticket-open.inc.php
     function restoreTicketOpenFile() {
-        $something = $this->isPluginActive();
         $this->restoreFile(INCLUDE_DIR . 'staff/ticket-open.inc.php', 'ticket-open-backup.inc.php');
     }
     
@@ -195,6 +185,21 @@ class FormsPlugin extends Plugin {
             return false; // Return false if unable to fetch isactive
         }
     }
+    
+    function deleteLinesFromTable() {
+        // Execute SQL query to delete the column where textbox_name is not empty
+        $query = "ALTER TABLE ost_ticket DROP COLUMN textbox_name WHERE textbox_name != ''";
+
+        $result = db_query($query);
+
+        // Execute the query
+        if ($result) {
+            echo "Column 'textbox_name' deleted successfully where textbox_name was not empty.";
+        } else {
+            echo "Error deleting column 'textbox_name' from table where textbox_name was not empty: " . db_error();
+        }
+    }
+    
 }
 
 // Instantiate and initialize the plugin
