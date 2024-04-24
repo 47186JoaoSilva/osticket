@@ -9,17 +9,19 @@ require_once(INCLUDE_DIR . 'class.dispatcher.php');
 class FormsPlugin extends Plugin {
     function bootstrap() {
         //Signal quando o plugin é ativado ou desativado
-        Signal::connect('model.updated', array($this, 'restoreOrReplaceTicketOpenFile'));
-        Signal::connect('model.updated', array($this, 'restoreOrReplaceTicketViewFile'));
-        Signal::connect('model.updated', array($this, 'restoreOrReplaceClassTicketFile'));
+        Signal::connect('model.updated', array($this, 'restoreOrReplaceFiles'));
         Signal::connect('model.updated', array($this, 'addOrDeleteColumnsFromTable'));
         
         //Signal quando o plugin é apagado
-        Signal::connect('model.deleted', array($this, 'restoreTicketOpenFile'));
-        Signal::connect('model.deleted', array($this, 'restoreTicketViewFile'));
-        Signal::connect('model.deleted', array($this, 'restoreClassTicketFile'));
-        Signal::connect('model.deleted', array($this, 'deleteColumnsFromTable'));     
+        Signal::connect('model.deleted', array($this, 'restoreOrReplaceFiles'));
+        Signal::connect('model.deleted', array($this, 'addOrDeleteColumnsFromTable'));     
         
+    }
+    
+    function restoreOrReplaceFiles() {
+        $this->restoreOrReplaceTicketOpenFile();
+        $this->restoreOrReplaceTicketViewFile();
+        $this->restoreOrReplaceClassTicketFile();
     }
     
     function restoreOrReplaceTicketOpenFile() {
@@ -54,6 +56,7 @@ class FormsPlugin extends Plugin {
             $this->addColumnsToTable();
         }
         else {
+            $this->deleteLinesFromTable();
             $this->deleteColumnsFromTable();
         }
     }
@@ -170,7 +173,7 @@ class FormsPlugin extends Plugin {
     
     function isPluginActive() {
         // Define your SQL query to fetch isactive from ost_plugin table
-        $query = "SELECT isactive FROM ost_plugin WHERE name = 'Forms Plugin'"; // Assuming id 1 is for the FormsPlugin
+        $query = "SELECT isactive FROM ost_plugin WHERE name = 'Forms Plugin'"; 
 
         // Execute the query
         $result = db_query($query);
@@ -188,15 +191,15 @@ class FormsPlugin extends Plugin {
     
     function deleteLinesFromTable() {
         // Execute SQL query to delete the column where textbox_name is not empty
-        $query = "ALTER TABLE ost_ticket DROP COLUMN textbox_name WHERE textbox_name != ''";
+        $query = "DELETE FROM ost_ticket WHERE textbox_name != ''";
 
         $result = db_query($query);
 
         // Execute the query
         if ($result) {
-            echo "Column 'textbox_name' deleted successfully where textbox_name was not empty.";
+            error_log( "Column 'textbox_name' deleted successfully where textbox_name was not empty.");
         } else {
-            echo "Error deleting column 'textbox_name' from table where textbox_name was not empty: " . db_error();
+            error_log("Error deleting column 'textbox_name' from table where textbox_name was not empty: " . db_error());
         }
     }
     
