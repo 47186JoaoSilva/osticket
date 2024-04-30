@@ -25,7 +25,7 @@ class FormsPlugin extends Plugin {
     }
     
     function restoreOrReplaceTicketOpenFile() {
-        if($this->isPluginActive()== 1) {
+        if($this->isPluginActive()) {
             $this->replaceTicketOpenFile();
         }
         else {
@@ -34,7 +34,7 @@ class FormsPlugin extends Plugin {
     }
     
     function restoreOrReplaceTicketViewFile() {
-        if($this->isPluginActive()== 1) {
+        if($this->isPluginActive()) {
             $this->replaceTicketViewFile();
         }
         else {
@@ -43,7 +43,7 @@ class FormsPlugin extends Plugin {
     }
     
     function restoreOrReplaceClassTicketFile() {
-        if($this->isPluginActive()== 1) {
+        if($this->isPluginActive()) {
             $this->replaceClassTicketFile();
         }
         else {
@@ -52,10 +52,13 @@ class FormsPlugin extends Plugin {
     }
     
     function addOrDeleteColumnsFromTable() {
-        if($this->isPluginActive()== 1) {
+        if($this->isPluginActive()) {
             $this->addColumnsToTable();
+            $this->copyBackupIfExists();
         }
         else {
+            //TODO(): Add condition to see if the checkbox is checked or not
+            $this->createBackupTables();
             $this->deleteLinesFromTable();
             $this->deleteColumnsFromTable();
         }
@@ -190,24 +193,136 @@ class FormsPlugin extends Plugin {
     }
     
     function deleteLinesFromTable() {
-        // Execute SQL query to delete the column where textbox_name is not empty
-        $query = "DELETE FROM ost_ticket WHERE textbox_name != ''";
-
+        $query = "SELECT ticket_id FROM ost_ticket WHERE textbox_name != ''";
         $result = db_query($query);
 
-        // Execute the query
-        if ($result) {
-            error_log( "Column 'textbox_name' deleted successfully where textbox_name was not empty.");
+        if (!$result) {
+            error_log("Error retrieving ticket_id where textbox_name is not empty: " . db_error());
+            return; 
+        }
+
+        $ticketIds = [];
+
+        while ($row = db_fetch_array($result)) {
+            $ticketIds[] = $row['ticket_id'];
+        }
+
+        $deleteQuery1 = "DELETE FROM ost_ticket WHERE ticket_id IN (" . implode(',', $ticketIds) . ")";
+        $deleteResult1 = db_query($deleteQuery1);
+
+        $deleteQuery2 = "DELETE FROM ost_ticket__cdata WHERE ticket_id IN (" . implode(',', $ticketIds) . ")";
+        $deleteResult2 = db_query($deleteQuery2);
+
+        if ($deleteResult1 && $deleteResult2) {
+            error_log("Rows deleted successfully from ost_ticket and ost_ticket__cdata where textbox_name was not empty.");
         } else {
-            error_log("Error deleting column 'textbox_name' from table where textbox_name was not empty: " . db_error());
+            error_log("Error deleting rows from ost_ticket and ost_ticket__cdata where textbox_name was not empty: " . db_error());
+        }
+    }  
+    
+    function copyBackupIfExists() {
+        // Check if backup tables exist
+        $ticketBackupExists = db_query("SHOW TABLES LIKE 'ost_ticket_backup'")->num_rows > 0;
+        $cdataBackupExists = db_query("SHOW TABLES LIKE 'ost_ticket__cdata_backup'")->num_rows > 0;
+
+        // If backup tables exist, copy data
+        if ($ticketBackupExists) {
+            // Copy data from ost_ticket_backup to ost_ticket
+            $copyTicketQuery = "INSERT INTO ost_ticket SELECT * FROM ost_ticket_backup";
+            $result1 = db_query($copyTicketQuery);
+            if (!$result1) {
+                error_log("Error copying data from ost_ticket_backup to ost_ticket: " . db_error());
+                return;
+            }
+        }
+
+        if ($cdataBackupExists) {
+            // Copy data from ost_ticket__cdata_backup to ost_ticket__cdata
+            $copyCdataQuery = "INSERT INTO ost_ticket__cdata SELECT * FROM ost_ticket__cdata_backup";
+            $result2 = db_query($copyCdataQuery);
+            if (!$result2) {
+                error_log("Error copying data from ost_ticket__cdata_backup to ost_ticket__cdata: " . db_error());
+                return;
+            }
+        }
+        
+        // Delete backup tables if they exist
+        if ($ticketBackupExists) {
+            $deleteTicketBackupQuery = "DROP TABLE ost_ticket_backup";
+            $result3 = db_query($deleteTicketBackupQuery);
+            if (!$result3) {
+                error_log("Error deleting backup table ost_ticket_backup: " . db_error());
+                return;
+            }
+        }
+
+        if ($cdataBackupExists) {
+            $deleteCdataBackupQuery = "DROP TABLE ost_ticket__cdata_backup";
+            $result4 = db_query($deleteCdataBackupQuery);
+            if (!$result4) {
+                error_log("Error deleting backup table ost_ticket__cdata_backup: " . db_error());
+                return;
+            }
+        }
+        
+        // Log success
+        if ($ticketBackupExists || $cdataBackupExists) {
+            error_log("Data copied from backup tables to original tables successfully.");
+        } else {
+            error_log("Backup tables do not exist.");
         }
     }
+
     
+    function createBackupTables() { // 
+        // Check if the tables already exist
+        $ticketTableExists = db_query("SHOW TABLES LIKE 'ost_ticket_backup'")->num_rows > 0;
+        $cdataTableExists = db_query("SHOW TABLES LIKE 'ost_ticket__cdata_backup'")->num_rows > 0;
+
+        if (!$ticketTableExists) {
+            // Create ost_ticket_backup table
+            $createTicketTableQuery = "CREATE TABLE ost_ticket_backup LIKE ost_ticket";
+            $result1 = db_query($createTicketTableQuery);
+            if (!$result1) {
+                error_log("Error creating table ost_ticket_backup: " . db_error());
+                return;
+            }
+
+            // Copy data from ost_ticket to ost_ticket_backup where textbox_name != ''
+            $copyTicketDataQuery = "INSERT INTO ost_ticket_backup SELECT * FROM ost_ticket WHERE ticket_id IN (SELECT ticket_id FROM ost_ticket WHERE textbox_name != '')";
+            $result2 = db_query($copyTicketDataQuery);
+            if (!$result2) {
+                error_log("Error copying data to table ost_ticket_backup: " . db_error());
+                return;
+            }
+        }
+
+        if (!$cdataTableExists) {
+            // Create ost_ticket__cdata_backup table
+            $createCdataTableQuery = "CREATE TABLE ost_ticket__cdata_backup LIKE ost_ticket__cdata";
+            $result3 = db_query($createCdataTableQuery);
+            if (!$result3) {
+                error_log("Error creating table ost_ticket__cdata_backup: " . db_error());
+                return;
+            }
+
+            // Copy data from ost_ticket__cdata to ost_ticket__cdata_backup where ticket_id matches
+            $copyCdataQuery = "INSERT INTO ost_ticket__cdata_backup SELECT * FROM ost_ticket__cdata WHERE ticket_id IN (SELECT ticket_id FROM ost_ticket WHERE textbox_name != '')";
+            $result4 = db_query($copyCdataQuery);
+            if (!$result4) {
+                error_log("Error copying data to table ost_ticket__cdata_backup: " . db_error());
+                return;
+            }
+        }
+
+        // Log success
+        if (!$ticketTableExists && !$cdataTableExists) {
+            error_log("Tables ost_ticket_backup and ost_ticket__cdata_backup created and data copied successfully.");
+        } else {
+            error_log("Tables ost_ticket_backup and ost_ticket__cdata_backup already exist.");
+        }
+    }
 }
 
-// Instantiate and initialize the plugin
 $forms_plugin = new FormsPlugin();
 $forms_plugin->bootstrap();
-
-
-    

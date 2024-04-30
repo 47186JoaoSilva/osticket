@@ -135,6 +135,9 @@ if ($count) //Show options..
         _N('selected plugin', 'selected plugins', 2)); ?></font>
     </p>
     <div><?php echo __('Please confirm to continue.'); ?></div>
+    <!-- New checkbox -->
+    <label for="checkbox_name"><?php echo __('Checkbox Label'); ?></label>
+    <input type="checkbox" id="checkbox_name" name="checkbox_name">
     <hr style="margin-top:1em"/>
     <p class="full-width">
         <span class="buttons pull-left">
