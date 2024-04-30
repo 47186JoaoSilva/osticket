@@ -100,7 +100,7 @@ class FormsPlugin extends Plugin {
             // Read the content of the modified file
             $modified_content = file_get_contents($modified_file_path);
             
-            //Copiar o ficheiro original para o backup
+            //TODO(): Copiar o ficheiro original para o backup
             
             // Write the modified content to the original file, overwriting the existing content
             file_put_contents($file_path, $modified_content);
@@ -176,7 +176,7 @@ class FormsPlugin extends Plugin {
     
     function isPluginActive() {
         // Define your SQL query to fetch isactive from ost_plugin table
-        $query = "SELECT isactive FROM ost_plugin WHERE name = 'Forms Plugin'"; 
+        $query = "SELECT isactive FROM ost_plugin WHERE name = 'Forms Plugin'"; //TODO(): Is this the best way?
 
         // Execute the query
         $result = db_query($query);
