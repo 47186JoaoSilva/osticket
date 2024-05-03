@@ -7,7 +7,7 @@ require_once(INCLUDE_DIR . 'class.dispatcher.php');
 
 // Define your plugin class
 class FormsPlugin extends Plugin {
-    function bootstrap() {
+    /*function bootstrap() {
         //Signal quando o plugin é ativado ou desativado
         Signal::connect('model.updated', array($this, 'restoreOrReplaceFiles'));
         Signal::connect('model.updated', array($this, 'addOrDeleteColumnsFromTable'));
@@ -16,8 +16,19 @@ class FormsPlugin extends Plugin {
         Signal::connect('model.deleted', array($this, 'restoreOrReplaceFiles'));
         Signal::connect('model.deleted', array($this, 'addOrDeleteColumnsFromTable'));     
         
+    }*/
+     function bootstrap() {
+      Signal::connect('model.updated', array($this, 'addFields'));
     }
     
+     function addFields() {
+      if($this->isPluginActive()) {
+          $this->addCabin();
+      }
+      else {
+          
+      }
+    }
     function restoreOrReplaceFiles() {
         $this->restoreOrReplaceTicketOpenFile();
         $this->restoreOrReplaceTicketViewFile();
@@ -320,6 +331,54 @@ class FormsPlugin extends Plugin {
             error_log("Tables ost_ticket_backup and ost_ticket__cdata_backup created and data copied successfully.");
         } else {
             error_log("Tables ost_ticket_backup and ost_ticket__cdata_backup already exist.");
+        }
+    }
+        function addCabin() {
+        $queryHasCabin = "SELECT name FROM `ost_form_field` WHERE name = 'cabine'";
+        $resultHasCabin = db_query($queryHasCabin);
+        if (db_num_rows($resultHasCabin) != 0)
+            return;
+        $querySort = "SELECT MAX(sort) FROM `ost_form_field` WHERE form_id = 2";
+        $result = db_query($querySort);
+        $row = db_fetch_row($result);
+        $maxSort = $row[0];
+
+        if(!$maxSort){
+            error_log("Error trying to get the sort number of the form") . db_error();
+        } else{
+            $maxSort += 1;
+            $queryConf = "SELECT serial_number FROM `SINCRO_Cabinet`";
+            $confAux = db_query($queryConf);
+            if(!$confAux){
+                error_log("Error trying to get the cabin serial number values") . db_error();
+            } else{
+                $serialNumbers = array();
+                while ($row = db_fetch_array($confAux)) {
+                    $serialNumbers[] = $row['serial_number'];
+                }
+                $conf = '{"choices":"';
+                $key = 1;
+                foreach ($serialNumbers as $serialNumber) {
+                    if(sizeof($serialNumbers) != $key){
+                        $conf .= "{$key}:{$serialNumber}" . '\r\n';
+                        $key++;
+                    } else{
+                        $conf .= "{$key}:{$serialNumber}";
+                    }
+                }
+                $conf .= '","default":"","prompt":"Select","multiselect":false}';
+                $confSlash = addslashes($conf);
+                $query = "INSERT INTO `ost_form_field` 
+                (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
+                values ('2','30465','choices','Número de série','cabine','{$confSlash}','{$maxSort}', NULL, CURDATE(), CURDATE())";
+                $result = db_query($query);
+                
+                if(!result){
+                    error_log("Coudn't insert the values into the table ost_form_field") . db_error();
+                } else{
+                    echo ___('successe');
+                }
+            }
         }
     }
 }
