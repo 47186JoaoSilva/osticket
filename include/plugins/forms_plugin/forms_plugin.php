@@ -232,9 +232,9 @@ class FormsPlugin extends Plugin {
         //Add a break field for Cabin informations
         $this->addBreak($label, $breakName);
         //Add a choice field for the Cabin Model
-        $this->addFieldModel($fieldNameM, $tableName, $name, $flags);
+        $this->addFieldModel($label, $fieldNameM, $tableName, $name, $flags);
         //Add a choice field for the Cabin Serial Number
-        $this->addFieldSerial($fieldNameSN, $tableName, $name, $flags);
+        $this->addFieldSerial($label, $fieldNameSN, $tableName, $name, $flags);
     }
     
     function addBoxInfo(){
@@ -249,9 +249,9 @@ class FormsPlugin extends Plugin {
         //Add a break field for Cinemometer informations
         $this->addBreak($label, $breakName);
         //Add a choice field for the Cinemometer Model
-        $this->addFieldModel($fieldNameM, $tableName, $name, $flags);
+        $this->addFieldModel($label, $fieldNameM, $tableName, $name, $flags);
         //Add a choice field for the Cinemometer Serial Number
-        $this->addFieldSerial($fieldNameSN, $tableName, $name, $flags);
+        $this->addFieldSerial($label, $fieldNameSN, $tableName, $name, $flags);
     }
     
     function addCinemometerInfo(){
@@ -266,9 +266,9 @@ class FormsPlugin extends Plugin {
         //Add a break field for Cinemometer informations
         $this->addBreak($label, $breakName);
         //Add a choice field for the Cinemometer Model
-        $this->addFieldModel($fieldNameM, $tableName, $name, $flags);
+        $this->addFieldModel($label, $fieldNameM, $tableName, $name, $flags);
         //Add a choice field for the Cinemometer Serial Number
-        $this->addFieldSerial($fieldNameSN, $tableName, $name, $flags);
+        $this->addFieldSerial($label, $fieldNameSN, $tableName, $name, $flags);
     }
     
     function addUPSInfo(){
@@ -283,9 +283,9 @@ class FormsPlugin extends Plugin {
         //Add a break field for Cinemometer informations
         $this->addBreak($label, $breakName);
         //Add a choice field for the Cinemometer Model
-        $this->addFieldModel($fieldNameM, $tableName, $name, $flags);
+        $this->addFieldModel($label, $fieldNameM, $tableName, $name, $flags);
         //Add a choice field for the Cinemometer Serial Number
-        $this->addFieldSerial($fieldNameSN, $tableName, $name, $flags);
+        $this->addFieldSerial($label, $fieldNameSN, $tableName, $name, $flags);
     }
     
     function addRouterInfo(){
@@ -300,12 +300,12 @@ class FormsPlugin extends Plugin {
         //Add a break field for Cinemometer informations
         $this->addBreak($label, $breakName);
         //Add a choice field for the Cinemometer Model
-        $this->addFieldModel($fieldNameM, $tableName, $name, $flags);
+        $this->addFieldModel($label, $fieldNameM, $tableName, $name, $flags);
         //Add a choice field for the Cinemometer Serial Number
-        $this->addFieldSerial($fieldNameSN, $tableName, $name, $flags);
+        $this->addFieldSerial($label, $fieldNameSN, $tableName, $name, $flags);
     }
     
-    function addFieldModel($fieldName, $tableName, $name, $flags){
+    function addFieldModel($label, $fieldName, $tableName, $name, $flags){
         if($this->hasField("{$fieldName}")){
             return;
         }
@@ -336,7 +336,7 @@ class FormsPlugin extends Plugin {
             $confSlash = addslashes($conf);
             $query = "INSERT INTO `ost_form_field` 
             (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
-            values ('2','{$flags}','choices','Modelo','{$fieldName}','{$confSlash}','{$sort}', NULL, CURDATE(), CURDATE())";
+            values ('2','{$flags}','choices','Modelo ({$label})' ,'{$fieldName}','{$confSlash}','{$sort}', NULL, CURDATE(), CURDATE())";
             $result = db_query($query);
 
             if(!$result){
@@ -347,7 +347,7 @@ class FormsPlugin extends Plugin {
         }
     }
     
-    function addFieldSerial($fieldName, $tableName, $name, $flags) {
+    function addFieldSerial($label, $fieldName, $tableName, $name, $flags) {
 
         if($this->hasField("{$fieldName}")){
             return;
@@ -379,7 +379,7 @@ class FormsPlugin extends Plugin {
             $confSlash = addslashes($conf);
             $query = "INSERT INTO `ost_form_field` 
             (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
-            values ('2','{$flags}','choices','Número de série','{$fieldName}','{$confSlash}','{$sort}', NULL, CURDATE(), CURDATE())";
+            values ('2','{$flags}','choices','Número de série ({$label})','{$fieldName}','{$confSlash}','{$sort}', NULL, CURDATE(), CURDATE())";
             $result = db_query($query);
 
             if(!$result){
