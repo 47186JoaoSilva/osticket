@@ -326,10 +326,10 @@ class FormsPlugin extends Plugin {
             $key = 1;
             foreach ($models as $model) {
                 if(sizeof($models) != $key){
-                    $conf .= "{$key}:{$model}" . '\r\n';
+                    $conf .= "{$model}:{$model}" . '\r\n';
                     $key++;
                 } else{
-                    $conf .= "{$key}:{$model}";
+                    $conf .= "{$model}:{$model}";
                 }
             }
             $conf .= '","default":"","prompt":"Select","multiselect":false}';
@@ -369,10 +369,10 @@ class FormsPlugin extends Plugin {
             $key = 1;
             foreach ($serialNumbers as $serialNumber) {
                 if(sizeof($serialNumbers) != $key){
-                    $conf .= "{$key}:{$serialNumber}" . '\r\n';
+                    $conf .= "{$serialNumber}:{$serialNumber}" . '\r\n';
                     $key++;
                 } else{
-                    $conf .= "{$key}:{$serialNumber}";
+                    $conf .= "{$serialNumber}:{$serialNumber}";
                 }
             }
             $conf .= '","default":"","prompt":"Select","multiselect":false}';
