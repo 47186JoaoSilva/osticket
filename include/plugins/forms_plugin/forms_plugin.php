@@ -17,169 +17,51 @@ class FormsPlugin extends Plugin {
         Signal::connect('model.deleted', array($this, 'addOrDeleteColumnsFromTable'));     
         
     }*/
-     function bootstrap() {
-      Signal::connect('model.updated', array($this, 'addFields'));
+    function bootstrap() {
+        Signal::connect('model.updated', array($this, 'addFields'));
+        Signal::connect('model.updated', array($this, 'addOrDeleteColumnsFromTable'));
+        Signal::connect('model.deleted', array($this, 'addOrDeleteColumnsFromTable'));
     }
     
-     function addFields() {
-      if($this->isPluginActive()) {
-          $this->addCabinInfo();
-          $this->addBoxInfo();
-          $this->addCinemometerInfo();
-          $this->addUPSInfo();
-          $this->addRouterInfo();
-      }
-      else {
-          
-      }
-    }
-    function restoreOrReplaceFiles() {
-        $this->restoreOrReplaceTicketOpenFile();
-        $this->restoreOrReplaceTicketViewFile();
-        $this->restoreOrReplaceClassTicketFile();
-    }
-    
-    function restoreOrReplaceTicketOpenFile() {
+    function addFields() {
         if($this->isPluginActive()) {
-            $this->replaceTicketOpenFile();
-        }
-        else {
-            $this->restoreTicketOpenFile();
-        }
-    }
-    
-    function restoreOrReplaceTicketViewFile() {
-        if($this->isPluginActive()) {
-            $this->replaceTicketViewFile();
-        }
-        else {
-            $this->restoreTicketViewFile();
-        }
-    }
-    
-    function restoreOrReplaceClassTicketFile() {
-        if($this->isPluginActive()) {
-            $this->replaceClassTicketFile();
-        }
-        else {
-            $this->restoreClassTicketFile();
+            $this->addCabinInfo();
+            $this->addBoxInfo();
+            $this->addCinemometerInfo();
+            $this->addUPSInfo();
+            $this->addRouterInfo();
         }
     }
     
     function addOrDeleteColumnsFromTable() {
         if($this->isPluginActive()) {
-            $this->addColumnsToTable();
             $this->copyBackupIfExists();
         }
         else {
             //TODO(): Add condition to see if the checkbox is checked or not
-            $this->createBackupTables();
+            //$this->createBackupTables();
             $this->deleteLinesFromTable();
             $this->deleteColumnsFromTable();
         }
     }
     
-    function replaceTicketOpenFile() {
-        $this->replaceFile(INCLUDE_DIR . 'staff/ticket-open.inc.php', 'ticket-open-modified.inc.php');
-    }
-    
-    function replaceTicketViewFile() {
-        $this->replaceFile(INCLUDE_DIR . 'staff/ticket-view.inc.php', 'ticket-view-modified.inc.php');
-    }
-    
-    function replaceClassTicketFile() {
-        $this->replaceFile(INCLUDE_DIR . 'class.ticket.php', 'class.ticket-modified.php');
-    }    
-    
-    // Function to restore the original content of ticket-open.inc.php
-    function restoreTicketOpenFile() {
-        $this->restoreFile(INCLUDE_DIR . 'staff/ticket-open.inc.php', 'ticket-open-backup.inc.php');
-    }
-    
-    // Function to restore the original content of ticket-view.inc.php
-    function restoreTicketViewFile() {
-        $this->restoreFile(INCLUDE_DIR . 'staff/ticket-view.inc.php', 'ticket-view-backup.inc.php');
-    }
-    
-    // Function to restore the original content of class.ticket.php
-    function restoreClassTicketFile() {
-        $this->restoreFile(INCLUDE_DIR . 'class.ticket.php', 'class.ticket-backup.php');
-    }
-    
-    // Function to replace the content of a file with modified content
-    function replaceFile($file_path, $modified_file_name) {
-        $modified_file_path = __DIR__ . '/' . $modified_file_name;
-        
-        // Check if both files exist
-        if (file_exists($file_path) && file_exists($modified_file_path)) {
-            // Read the content of the modified file
-            $modified_content = file_get_contents($modified_file_path);
-            
-            //TODO(): Copiar o ficheiro original para o backup
-            
-            // Write the modified content to the original file, overwriting the existing content
-            file_put_contents($file_path, $modified_content);
-        } else {
-            // Handle the case where either file doesn't exist
-            if (!file_exists($file_path)) {
-                error_log("$file_path does not exist!");
-            }
-            if (!file_exists($modified_file_path)) {
-                error_log("$modified_file_path does not exist!");
-            }
-        }
-    }
-    
-    // Function to restore the original content of a file
-    function restoreFile($file_path,$backup_path) {
-        $backup_file_path = __DIR__ . '/' . basename($backup_path);
-        
-        // Check if the backup file exists
-        if (file_exists($backup_file_path)) {
-            // Restore the backup file to the original location
-            copy($backup_file_path, $file_path);
-            // Delete the backup file after restoring
-            //unlink($backup_file_path);
-        } else {
-            // Handle the case where the backup file doesn't exist
-            error_log("Backup file for $file_path does not exist!");
-        }
-    }
-    
-    function addColumnsToTable() {
-        $columns = array(
-            'textbox_name' => "VARCHAR(255) NOT NULL DEFAULT ''",
-            'combo_option' => "VARCHAR(100) DEFAULT ''", 
-            'radio_option' => "VARCHAR(100) DEFAULT ''", 
-            'numeric_input' => "INT DEFAULT 0", 
-            'email_input' => "VARCHAR(255) DEFAULT ''", 
-            'checkbox_option' => "VARCHAR(100) DEFAULT ''" 
-        );
-        
-        foreach ($columns as $column => $definition) {
-            $query = "ALTER TABLE `ost_ticket` ADD COLUMN `$column` $definition";
-
-            if (db_query($query)) {
-                error_log("Column '$column' added successfully.");
-            } else {
-                error_log("Error adding column '$column' to table.");
-            }
-        }
-    }
-    
     function deleteColumnsFromTable() {
         $columns = array(
-            'textbox_name',
-            'combo_option',
-            'radio_option',
-            'numeric_input',
-            'email_input',
-            'checkbox_option'
+            'cabinModel',
+            'CabinSN',
+            'boxModel',
+            'boxSN',
+            'cinemometerModel',
+            'cinemometerSN',
+            'upsModel',
+            'upsSN',
+            'routerModel',
+            'routerSN',
         );
 
         foreach ($columns as $column) {
             // Define the SQL query to drop the column
-            $query = "ALTER TABLE `ost_ticket` DROP COLUMN `$column`";
+            $query = "ALTER TABLE `ost_ticket__cdata` DROP COLUMN `$column`";
 
             if (db_query($query)) {
                 error_log("Column '$column' deleted successfully.");
@@ -208,7 +90,7 @@ class FormsPlugin extends Plugin {
     }
     
     function deleteLinesFromTable() {
-        $query = "SELECT ticket_id FROM ost_ticket WHERE textbox_name != ''";
+        $query = "SELECT id FROM ost_form_field WHERE flags = 30465";
         $result = db_query($query);
 
         if (!$result) {
@@ -216,16 +98,16 @@ class FormsPlugin extends Plugin {
             return; 
         }
 
-        $ticketIds = [];
+        $formFieldsId = [];
 
         while ($row = db_fetch_array($result)) {
-            $ticketIds[] = $row['ticket_id'];
+            $formFieldsId[] = $row['id'];
         }
 
-        $deleteQuery1 = "DELETE FROM ost_ticket WHERE ticket_id IN (" . implode(',', $ticketIds) . ")";
+        $deleteQuery1 = "DELETE FROM ost_form_field WHERE id IN (" . implode(',', $formFieldsId) . ")";
         $deleteResult1 = db_query($deleteQuery1);
 
-        $deleteQuery2 = "DELETE FROM ost_ticket__cdata WHERE ticket_id IN (" . implode(',', $ticketIds) . ")";
+        $deleteQuery2 = "DELETE FROM ost_ticket__cdata WHERE CabinModel IS NOT NULL";
         $deleteResult2 = db_query($deleteQuery2);
 
         if ($deleteResult1 && $deleteResult2) {
