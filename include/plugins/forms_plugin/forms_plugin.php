@@ -24,6 +24,10 @@ class FormsPlugin extends Plugin {
      function addFields() {
       if($this->isPluginActive()) {
           $this->addCabinInfo();
+          $this->addBoxInfo();
+          $this->addCinemometerInfo();
+          $this->addUPSInfo();
+          $this->addRouterInfo();
       }
       else {
           
@@ -335,25 +339,102 @@ class FormsPlugin extends Plugin {
     }
     
     function addCabinInfo(){
+        //Define the constant values
         $label = "Cabine";
-        $name = "cabinBreak";
-        $this->addBreak($label, $name);
-        $this->addCabinModel();
-        $this->addCabinSerial();
+        $breakName = "cabinBreak";
+        $tableName = "SINCRO_Cabinet";
+        $flags = "30465";
+        $name = "cabin";
+        $fieldNameM = "cabinModel";
+        $fieldNameSN = "cabinSN";
+        //Add a break field for Cabin informations
+        $this->addBreak($label, $breakName);
+        //Add a choice field for the Cabin Model
+        $this->addFieldModel($fieldNameM, $tableName, $name, $flags);
+        //Add a choice field for the Cabin Serial Number
+        $this->addFieldSerial($fieldNameSN, $tableName, $name, $flags);
     }
     
-    function addCabinModel(){
-        if($this->hasField('cabineModel')){
+    function addBoxInfo(){
+        //Define the constant values
+        $label = "Caixa";
+        $breakName = "boxBreak";
+        $tableName = "SINCRO_Box";
+        $flags = "30465";
+        $name = "box";
+        $fieldNameM = "boxModel";
+        $fieldNameSN = "boxSN";
+        //Add a break field for Cinemometer informations
+        $this->addBreak($label, $breakName);
+        //Add a choice field for the Cinemometer Model
+        $this->addFieldModel($fieldNameM, $tableName, $name, $flags);
+        //Add a choice field for the Cinemometer Serial Number
+        $this->addFieldSerial($fieldNameSN, $tableName, $name, $flags);
+    }
+    
+    function addCinemometerInfo(){
+        //Define the constant values
+        $label = "Cinemómetro";
+        $breakName = "cinemometerBreak";
+        $tableName = "SINCRO_Cinemometer";
+        $flags = "30465";
+        $name = "cinemometer";
+        $fieldNameM = "cinemometerModel";
+        $fieldNameSN = "cinemometerSN";
+        //Add a break field for Cinemometer informations
+        $this->addBreak($label, $breakName);
+        //Add a choice field for the Cinemometer Model
+        $this->addFieldModel($fieldNameM, $tableName, $name, $flags);
+        //Add a choice field for the Cinemometer Serial Number
+        $this->addFieldSerial($fieldNameSN, $tableName, $name, $flags);
+    }
+    
+    function addUPSInfo(){
+        //Define the constant values
+        $label = "UPS";
+        $breakName = "upsBreak";
+        $tableName = "SINCRO_UPS";
+        $flags = "30465";
+        $name = "ups";
+        $fieldNameM = "upsModel";
+        $fieldNameSN = "upsSN";
+        //Add a break field for Cinemometer informations
+        $this->addBreak($label, $breakName);
+        //Add a choice field for the Cinemometer Model
+        $this->addFieldModel($fieldNameM, $tableName, $name, $flags);
+        //Add a choice field for the Cinemometer Serial Number
+        $this->addFieldSerial($fieldNameSN, $tableName, $name, $flags);
+    }
+    
+    function addRouterInfo(){
+        //Define the constant values
+        $label = "Router";
+        $breakName = "routerBreak";
+        $tableName = "SINCRO_Router";
+        $flags = "30465";
+        $name = "router";
+        $fieldNameM = "routerModel";
+        $fieldNameSN = "routerSN";
+        //Add a break field for Cinemometer informations
+        $this->addBreak($label, $breakName);
+        //Add a choice field for the Cinemometer Model
+        $this->addFieldModel($fieldNameM, $tableName, $name, $flags);
+        //Add a choice field for the Cinemometer Serial Number
+        $this->addFieldSerial($fieldNameSN, $tableName, $name, $flags);
+    }
+    
+    function addFieldModel($fieldName, $tableName, $name, $flags){
+        if($this->hasField("{$fieldName}")){
             return;
         }
         $sort = $this->getSort();
         if($sort == null){
             return;
         }
-        $queryConf = "SELECT DISTINCT model FROM `SINCRO_Cabinet`";
+        $queryConf = "SELECT DISTINCT model FROM `{$tableName}`";
         $confAux = db_query($queryConf);
         if(!$confAux){
-            error_log("Error trying to get the cabin models") . db_error();
+            error_log("Error trying to get the {$name} models from the table {$tableName}") . db_error();
         } else{
             $models = array();
             while ($row = db_fetch_array($confAux)) {
@@ -373,7 +454,7 @@ class FormsPlugin extends Plugin {
             $confSlash = addslashes($conf);
             $query = "INSERT INTO `ost_form_field` 
             (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
-            values ('2','30465','choices','Modelo','cabineModel','{$confSlash}','{$sort}', NULL, CURDATE(), CURDATE())";
+            values ('2','{$flags}','choices','Modelo','{$fieldName}','{$confSlash}','{$sort}', NULL, CURDATE(), CURDATE())";
             $result = db_query($query);
 
             if(!$result){
@@ -383,20 +464,20 @@ class FormsPlugin extends Plugin {
             }
         }
     }
+    
+    function addFieldSerial($fieldName, $tableName, $name, $flags) {
 
-    function addCabinSerial() {
-
-        if($this->hasField('cabineNS')){
+        if($this->hasField("{$fieldName}")){
             return;
         }
         $sort = $this->getSort();
         if($sort == null){
             return;
         }
-        $queryConf = "SELECT serial_number FROM `SINCRO_Cabinet`";
+        $queryConf = "SELECT serial_number FROM `{$tableName}`";
         $confAux = db_query($queryConf);
         if(!$confAux){
-            error_log("Error trying to get the cabin serial number values") . db_error();
+            error_log("Error trying to get the {$name} serial number values from the table {$tableName}") . db_error();
         } else{
             $serialNumbers = array();
             while ($row = db_fetch_array($confAux)) {
@@ -416,7 +497,7 @@ class FormsPlugin extends Plugin {
             $confSlash = addslashes($conf);
             $query = "INSERT INTO `ost_form_field` 
             (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
-            values ('2','30465','choices','Número de série','cabineNS','{$confSlash}','{$sort}', NULL, CURDATE(), CURDATE())";
+            values ('2','{$flags}','choices','Número de série','{$fieldName}','{$confSlash}','{$sort}', NULL, CURDATE(), CURDATE())";
             $result = db_query($query);
 
             if(!$result){
@@ -426,7 +507,6 @@ class FormsPlugin extends Plugin {
             }
         }
     }
-    
     
     function addBreak($label,$name){
         if($this->hasField("{$name}")){
