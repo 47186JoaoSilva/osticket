@@ -23,7 +23,7 @@ class FormsPlugin extends Plugin {
     
      function addFields() {
       if($this->isPluginActive()) {
-          $this->addCabin();
+          $this->addCabinInfo();
       }
       else {
           
@@ -333,11 +333,122 @@ class FormsPlugin extends Plugin {
             error_log("Tables ost_ticket_backup and ost_ticket__cdata_backup already exist.");
         }
     }
-        function addCabin() {
-        $queryHasCabin = "SELECT name FROM `ost_form_field` WHERE name = 'cabine'";
-        $resultHasCabin = db_query($queryHasCabin);
-        if (db_num_rows($resultHasCabin) != 0)
+    
+    function addCabinInfo(){
+        $label = "Cabine";
+        $name = "cabinBreak";
+        $this->addBreak($label, $name);
+        $this->addCabinModel();
+        $this->addCabinSerial();
+    }
+    
+    function addCabinModel(){
+        if($this->hasField('cabineModel')){
             return;
+        }
+        $sort = $this->getSort();
+        if($sort == null){
+            return;
+        }
+        $queryConf = "SELECT DISTINCT model FROM `SINCRO_Cabinet`";
+        $confAux = db_query($queryConf);
+        if(!$confAux){
+            error_log("Error trying to get the cabin models") . db_error();
+        } else{
+            $models = array();
+            while ($row = db_fetch_array($confAux)) {
+                $models[] = $row['model'];
+            }
+            $conf = '{"choices":"';
+            $key = 1;
+            foreach ($models as $model) {
+                if(sizeof($models) != $key){
+                    $conf .= "{$key}:{$model}" . '\r\n';
+                    $key++;
+                } else{
+                    $conf .= "{$key}:{$model}";
+                }
+            }
+            $conf .= '","default":"","prompt":"Select","multiselect":false}';
+            $confSlash = addslashes($conf);
+            $query = "INSERT INTO `ost_form_field` 
+            (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
+            values ('2','30465','choices','Modelo','cabineModel','{$confSlash}','{$sort}', NULL, CURDATE(), CURDATE())";
+            $result = db_query($query);
+
+            if(!$result){
+                error_log("Coudn't insert the values into the table ost_form_field") . db_error();
+            } else{
+                //Is there a success log?
+            }
+        }
+    }
+
+    function addCabinSerial() {
+
+        if($this->hasField('cabineNS')){
+            return;
+        }
+        $sort = $this->getSort();
+        if($sort == null){
+            return;
+        }
+        $queryConf = "SELECT serial_number FROM `SINCRO_Cabinet`";
+        $confAux = db_query($queryConf);
+        if(!$confAux){
+            error_log("Error trying to get the cabin serial number values") . db_error();
+        } else{
+            $serialNumbers = array();
+            while ($row = db_fetch_array($confAux)) {
+                $serialNumbers[] = $row['serial_number'];
+            }
+            $conf = '{"choices":"';
+            $key = 1;
+            foreach ($serialNumbers as $serialNumber) {
+                if(sizeof($serialNumbers) != $key){
+                    $conf .= "{$key}:{$serialNumber}" . '\r\n';
+                    $key++;
+                } else{
+                    $conf .= "{$key}:{$serialNumber}";
+                }
+            }
+            $conf .= '","default":"","prompt":"Select","multiselect":false}';
+            $confSlash = addslashes($conf);
+            $query = "INSERT INTO `ost_form_field` 
+            (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
+            values ('2','30465','choices','Número de série','cabineNS','{$confSlash}','{$sort}', NULL, CURDATE(), CURDATE())";
+            $result = db_query($query);
+
+            if(!$result){
+                error_log("Coudn't insert the values into the table ost_form_field") . db_error();
+            } else{
+                //Is there a success log?
+            }
+        }
+    }
+    
+    
+    function addBreak($label,$name){
+        if($this->hasField("{$name}")){
+            return;
+        }
+        $sort = $this->getSort();
+        if($sort == null){
+            return;
+        }
+        $query = "INSERT INTO `ost_form_field` 
+            (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
+            values ('2','30465','break','{$label}','{$name}', NULL,'{$sort}', NULL, CURDATE(), CURDATE())";
+        $result = db_query($query);
+
+        if(!$result){
+            error_log("Coudn't insert the values into the table ost_form_field") . db_error();
+        } else{
+            //Is there a success log?
+        }
+    }
+    
+    function getSort(){
         $querySort = "SELECT MAX(sort) FROM `ost_form_field` WHERE form_id = 2";
         $result = db_query($querySort);
         $row = db_fetch_row($result);
@@ -345,43 +456,22 @@ class FormsPlugin extends Plugin {
 
         if(!$maxSort){
             error_log("Error trying to get the sort number of the form") . db_error();
+            return null;
         } else{
-            $maxSort += 1;
-            $queryConf = "SELECT serial_number FROM `SINCRO_Cabinet`";
-            $confAux = db_query($queryConf);
-            if(!$confAux){
-                error_log("Error trying to get the cabin serial number values") . db_error();
-            } else{
-                $serialNumbers = array();
-                while ($row = db_fetch_array($confAux)) {
-                    $serialNumbers[] = $row['serial_number'];
-                }
-                $conf = '{"choices":"';
-                $key = 1;
-                foreach ($serialNumbers as $serialNumber) {
-                    if(sizeof($serialNumbers) != $key){
-                        $conf .= "{$key}:{$serialNumber}" . '\r\n';
-                        $key++;
-                    } else{
-                        $conf .= "{$key}:{$serialNumber}";
-                    }
-                }
-                $conf .= '","default":"","prompt":"Select","multiselect":false}';
-                $confSlash = addslashes($conf);
-                $query = "INSERT INTO `ost_form_field` 
-                (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
-                values ('2','30465','choices','Número de série','cabine','{$confSlash}','{$maxSort}', NULL, CURDATE(), CURDATE())";
-                $result = db_query($query);
-                
-                if(!result){
-                    error_log("Coudn't insert the values into the table ost_form_field") . db_error();
-                } else{
-                    echo ___('successe');
-                }
-            }
+            return $maxSort + 1;
+        }
+    }
+    
+    function hasField($fieldName){
+        //A pesquisa não deve ser feita através do nome, porque não é único, pode causar problemas com plugins futuros
+        $query = "SELECT name FROM `ost_form_field` WHERE name = '{$fieldName}'";
+        $result= db_query($query);
+        if (db_num_rows($result) != 0){
+            return true;
+        } else {
+            return false;
         }
     }
 }
-
 $forms_plugin = new FormsPlugin();
 $forms_plugin->bootstrap();
