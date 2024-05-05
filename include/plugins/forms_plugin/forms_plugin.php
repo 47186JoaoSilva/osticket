@@ -92,25 +92,41 @@ class FormsPlugin extends Plugin {
     function deleteLinesFromTable() {
         $query = "SELECT id FROM ost_form_field WHERE flags = 30465";
         $result = db_query($query);
-
         if (!$result) {
             error_log("Error retrieving ticket_id where textbox_name is not empty: " . db_error());
             return; 
         }
-
         $formFieldsId = [];
-
         while ($row = db_fetch_array($result)) {
             $formFieldsId[] = $row['id'];
         }
-
+        
+        $firstFieldId = $formFieldsId[1];
+        $selectQuery = "SELECT entry_id FROM ost_form_entry_values WHERE field_id = $firstFieldId";
+        $selectResult = db_query($selectQuery);
+        $entryIdsToDelete = [];
+        while ($row = db_fetch_array($selectResult)) {
+            $entryIdsToDelete[] = $row['entry_id'];
+        }
+        
+        $dateQuery = "SELECT created FROM ost_form_field WHERE name = 'cabinBreak'";
+        $dateResult = db_query($dateQuery);
+        $row = db_fetch_array($dateResult);
+        $createdValue = $row['created'];
+        
+        $deleteQuery = "DELETE FROM ost_ticket WHERE created > '{$createdValue}'";
+        $deleteResult = db_query($deleteQuery);
+        
         $deleteQuery1 = "DELETE FROM ost_form_field WHERE id IN (" . implode(',', $formFieldsId) . ")";
         $deleteResult1 = db_query($deleteQuery1);
 
         $deleteQuery2 = "DELETE FROM ost_ticket__cdata WHERE CabinModel IS NOT NULL";
         $deleteResult2 = db_query($deleteQuery2);
+        
+        $deleteQuery3 = "DELETE FROM ost_form_entry_values WHERE entry_id IN (" . implode(',', $entryIdsToDelete) . ")";
+        $deleteResult3 = db_query($deleteQuery3);
 
-        if ($deleteResult1 && $deleteResult2) {
+        if ($deleteResult && $deleteResult1 && $deleteResult2 && $deleteResult3) {
             error_log("Rows deleted successfully from ost_ticket and ost_ticket__cdata where textbox_name was not empty.");
         } else {
             error_log("Error deleting rows from ost_ticket and ost_ticket__cdata where textbox_name was not empty: " . db_error());
@@ -338,7 +354,7 @@ class FormsPlugin extends Plugin {
             $confSlash = addslashes($conf);
             $query = "INSERT INTO `ost_form_field` 
             (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
-            values ('2','{$flags}','choices','Modelo ({$label})' ,'{$fieldName}','{$confSlash}','{$sort}', NULL, CURDATE(), CURDATE())";
+            values ('2','{$flags}','choices','Modelo ({$label})' ,'{$fieldName}','{$confSlash}','{$sort}', NULL, NOW(), NOW())";
             $result = db_query($query);
 
             if(!$result){
@@ -381,7 +397,7 @@ class FormsPlugin extends Plugin {
             $confSlash = addslashes($conf);
             $query = "INSERT INTO `ost_form_field` 
             (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
-            values ('2','{$flags}','choices','Número de série ({$label})','{$fieldName}','{$confSlash}','{$sort}', NULL, CURDATE(), CURDATE())";
+            values ('2','{$flags}','choices','Número de série ({$label})','{$fieldName}','{$confSlash}','{$sort}', NULL, NOW(), NOW())";
             $result = db_query($query);
 
             if(!$result){
@@ -424,7 +440,7 @@ class FormsPlugin extends Plugin {
             $confSlash = addslashes($conf);
             $query = "INSERT INTO `ost_form_field` 
             (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
-            values ('2','30465','choices','Endereço IP do router','routerIP','{$confSlash}','{$sort}', NULL, CURDATE(), CURDATE())";
+            values ('2','30465','choices','Endereço IP do router','routerIP','{$confSlash}','{$sort}', NULL, NOW(), NOW()I want)";
             $result = db_query($query);
 
             if(!$result){
@@ -445,7 +461,7 @@ class FormsPlugin extends Plugin {
         }
         $query = "INSERT INTO `ost_form_field` 
             (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
-            values ('2','30465','break','{$label}','{$name}', NULL,'{$sort}', NULL, CURDATE(), CURDATE())";
+            values ('2','30465','break','{$label}','{$name}', NULL,'{$sort}', NULL, NOW(), NOW())";
         $result = db_query($query);
 
         if(!$result){
