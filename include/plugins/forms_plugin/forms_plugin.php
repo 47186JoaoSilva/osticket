@@ -113,9 +113,10 @@ class FormsPlugin extends Plugin {
         $dateResult = db_query($dateQuery);
         $row = db_fetch_array($dateResult);
         $createdValue = $row['created'];
-        
-        $deleteQuery = "DELETE FROM ost_ticket WHERE created > '{$createdValue}'";
-        $deleteResult = db_query($deleteQuery);
+        if($createdValue) {
+            $deleteQuery = "DELETE FROM ost_ticket WHERE created > '$createdValue'";
+            $deleteResult = db_query($deleteQuery);
+        }
         
         $deleteQuery1 = "DELETE FROM ost_form_field WHERE id IN (" . implode(',', $formFieldsId) . ")";
         $deleteResult1 = db_query($deleteQuery1);
