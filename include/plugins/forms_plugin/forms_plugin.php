@@ -246,11 +246,11 @@ class FormsPlugin extends Plugin {
         $name = "box";
         $fieldNameM = "boxModel";
         $fieldNameSN = "boxSN";
-        //Add a break field for Cinemometer informations
+        //Add a break field for Box informations
         $this->addBreak($label, $breakName);
-        //Add a choice field for the Cinemometer Model
+        //Add a choice field for the Box Model
         $this->addFieldModel($label, $fieldNameM, $tableName, $name, $flags);
-        //Add a choice field for the Cinemometer Serial Number
+        //Add a choice field for the Box Serial Number
         $this->addFieldSerial($label, $fieldNameSN, $tableName, $name, $flags);
     }
     
@@ -280,11 +280,11 @@ class FormsPlugin extends Plugin {
         $name = "ups";
         $fieldNameM = "upsModel";
         $fieldNameSN = "upsSN";
-        //Add a break field for Cinemometer informations
+        //Add a break field for UPS informations
         $this->addBreak($label, $breakName);
-        //Add a choice field for the Cinemometer Model
+        //Add a choice field for the UPS Model
         $this->addFieldModel($label, $fieldNameM, $tableName, $name, $flags);
-        //Add a choice field for the Cinemometer Serial Number
+        //Add a choice field for the UPS Serial Number
         $this->addFieldSerial($label, $fieldNameSN, $tableName, $name, $flags);
     }
     
@@ -297,12 +297,14 @@ class FormsPlugin extends Plugin {
         $name = "router";
         $fieldNameM = "routerModel";
         $fieldNameSN = "routerSN";
-        //Add a break field for Cinemometer informations
+        //Add a break field for Router informations
         $this->addBreak($label, $breakName);
-        //Add a choice field for the Cinemometer Model
+        //Add a choice field for the Router Model
         $this->addFieldModel($label, $fieldNameM, $tableName, $name, $flags);
-        //Add a choice field for the Cinemometer Serial Number
+        //Add a choice field for the Router Serial Number
         $this->addFieldSerial($label, $fieldNameSN, $tableName, $name, $flags);
+        //Add a choice field for the Router IP address
+        $this->addRouterIP();
     }
     
     function addFieldModel($label, $fieldName, $tableName, $name, $flags){
@@ -323,11 +325,11 @@ class FormsPlugin extends Plugin {
                 $models[] = $row['model'];
             }
             $conf = '{"choices":"';
-            $key = 1;
+            $counter = 1;
             foreach ($models as $model) {
-                if(sizeof($models) != $key){
+                if(sizeof($models) != $counter){
                     $conf .= "{$model}:{$model}" . '\r\n';
-                    $key++;
+                    $counter++;
                 } else{
                     $conf .= "{$model}:{$model}";
                 }
@@ -366,11 +368,11 @@ class FormsPlugin extends Plugin {
                 $serialNumbers[] = $row['serial_number'];
             }
             $conf = '{"choices":"';
-            $key = 1;
+            $counter = 1;
             foreach ($serialNumbers as $serialNumber) {
-                if(sizeof($serialNumbers) != $key){
+                if(sizeof($serialNumbers) != $counter){
                     $conf .= "{$serialNumber}:{$serialNumber}" . '\r\n';
-                    $key++;
+                    $counter++;
                 } else{
                     $conf .= "{$serialNumber}:{$serialNumber}";
                 }
@@ -380,6 +382,49 @@ class FormsPlugin extends Plugin {
             $query = "INSERT INTO `ost_form_field` 
             (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
             values ('2','{$flags}','choices','Número de série ({$label})','{$fieldName}','{$confSlash}','{$sort}', NULL, CURDATE(), CURDATE())";
+            $result = db_query($query);
+
+            if(!$result){
+                error_log("Coudn't insert the values into the table ost_form_field") . db_error();
+            } else{
+                //Is there a success log?
+            }
+        }
+    }
+    
+    function addRouterIP() {
+
+        if($this->hasField("routerIP")){
+            return;
+        }
+        $sort = $this->getSort();
+        if($sort == null){
+            return;
+        }
+        $queryConf = "SELECT ip_address FROM `SINCRO_Router`";
+        $confAux = db_query($queryConf);
+        if(!$confAux){
+            error_log("Error trying to get the router ip address values from the table SINCRO_Router") . db_error();
+        } else{
+            $ipAddresses = array();
+            while ($row = db_fetch_array($confAux)) {
+                $ipAddresses[] = $row['ip_address'];
+            }
+            $conf = '{"choices":"';
+            $counter = 1;
+            foreach ($ipAddresses as $ipAdress) {
+                if(sizeof($ipAddresses) != $counter){
+                    $conf .= "{$ipAdress}:{$ipAdress}" . '\r\n';
+                    $counter++;
+                } else{
+                    $conf .= "{$ipAdress}:{$ipAdress}";
+                }
+            }
+            $conf .= '","default":"","prompt":"Select","multiselect":false}';
+            $confSlash = addslashes($conf);
+            $query = "INSERT INTO `ost_form_field` 
+            (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
+            values ('2','30465','choices','Endereço IP do router','routerIP','{$confSlash}','{$sort}', NULL, CURDATE(), CURDATE())";
             $result = db_query($query);
 
             if(!$result){
