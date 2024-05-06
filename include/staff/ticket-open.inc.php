@@ -309,7 +309,7 @@ if ($_POST)
                         zone');?>&nbsp;(<?php echo $cfg->getTimezone($thisstaff); ?>)</em>
             </td>
         </tr>
-
+        
         <?php
         if($thisstaff->hasPerm(Ticket::PERM_ASSIGN, false)) { ?>
         <tr>
@@ -346,6 +346,45 @@ if ($_POST)
             </td>
         </tr>
         <?php } ?>
+        </tbody>
+        <tbody>
+            <tr>
+                <th colspan="2">
+                    <em><strong><?php echo __('Avarias nas cabines');?></strong>:</em>
+                </th>
+            </tr>
+            <tr>
+                <td width="160"><?php echo __('Distrito');?>:</td>
+                <td>
+                    <select name="district_option" id="district_option" onchange="updateAddressOptions()">
+                        <option value="" selected><?php echo __('-Select District-');?></option>
+                        <?php 
+                        $districtOptions = FormsPlugin::getDistricts(null);
+
+                        foreach ($districtOptions as $option) {
+                            $selected = ($info['district_option'] === $option) ? "selected" : ""; // Check if the option is selected
+                            echo '<option value="' . $option . '" ' . $selected . '>' . $option . '</option>';
+                        }
+                        ?>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td width="160"><?php echo __('Morada');?>:</td>
+                <td>
+                    <select name="address_option" id="address_option" onchange="updateDistrictOptions()">
+                        <option value="" selected><?php echo __('-Select Address-');?></option>
+                        <?php 
+                        $addressOptions = FormsPlugin::getAddresses(null);
+
+                        foreach ($addressOptions as $option) {
+                            $selected = ($info['address_option'] === $option) ? "selected" : ""; // Check if the option is selected
+                            echo '<option value="' . $option . '" ' . $selected . '>' . $option . '</option>';
+                        }
+                        ?>
+                    </select>
+                </td>
+            </tr>
         </tbody>
         <tbody id="dynamic-form">
         <?php
@@ -594,4 +633,73 @@ $(function() {
     });
 
   });
+</script>
+
+<script>
+// Define the updateAddressOptions function to fetch and populate address options based on the selected district
+function updateAddressOptions() {
+    var selectedDistrict = document.getElementById("district_option").value;
+    var addressCombobox = document.getElementById("address_option");
+    
+    // Clear existing options
+    addressCombobox.innerHTML = "";
+
+    // Fetch addresses for the selected district via AJAX
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var addresses = JSON.parse(this.responseText);
+
+            // Populate options for the address combobox
+            addresses.forEach(function(address) {
+                var option = document.createElement("option");
+                option.value = address;
+                option.text = address;
+                addressCombobox.add(option);
+            });
+            
+            var defaultOption = document.createElement("option");
+            defaultOption.value = ""; // Set default value
+            defaultOption.text = "-Select Address-"; // Set default text
+            addressCombobox.add(defaultOption);
+        }
+    };
+    var url = "get_addresses.php?district=" + encodeURIComponent(selectedDistrict);
+    xmlhttp.open("GET", url, true);
+    xmlhttp.send();
+}
+
+// Define the updateAddressOptions function to fetch and populate address options based on the selected district
+function updateDistrictOptions() {
+    var selectedAddress = document.getElementById("address_option").value;
+    var districtCombobox = document.getElementById("district_option");
+    
+    // Clear existing options
+    districtCombobox.innerHTML = "";
+
+    // Fetch addresses for the selected district via AJAX
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var districts = JSON.parse(this.responseText);
+
+            // Populate options for the address combobox
+            districts.forEach(function(district) {
+                var option = document.createElement("option");
+                option.value = district;
+                option.text = district;
+                districtCombobox.add(option);
+            });
+            
+            var defaultOption = document.createElement("option");
+            defaultOption.value = ""; // Set default value
+            defaultOption.text = "-Select District-"; // Set default text
+            districtCombobox.add(defaultOption);
+            
+        }
+    };
+    var url = "get_districts.php?address=" + encodeURIComponent(selectedAddress);
+    xmlhttp.open("GET", url, true);
+    xmlhttp.send();
+}
 </script>

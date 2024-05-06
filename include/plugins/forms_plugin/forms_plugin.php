@@ -7,20 +7,77 @@ require_once(INCLUDE_DIR . 'class.dispatcher.php');
 
 // Define your plugin class
 class FormsPlugin extends Plugin {
-    /*function bootstrap() {
-        //Signal quando o plugin é ativado ou desativado
-        Signal::connect('model.updated', array($this, 'restoreOrReplaceFiles'));
-        Signal::connect('model.updated', array($this, 'addOrDeleteColumnsFromTable'));
-        
-        //Signal quando o plugin é apagado
-        Signal::connect('model.deleted', array($this, 'restoreOrReplaceFiles'));
-        Signal::connect('model.deleted', array($this, 'addOrDeleteColumnsFromTable'));     
-        
-    }*/
     function bootstrap() {
-        Signal::connect('model.updated', array($this, 'addFields'));
-        Signal::connect('model.updated', array($this, 'addOrDeleteColumnsFromTable'));
-        Signal::connect('model.deleted', array($this, 'addOrDeleteColumnsFromTable'));
+        //Signal::connect('model.updated', array($this, 'addFields'));
+        //Signal::connect('model.updated', array($this, 'addOrDeleteColumnsFromTable'));
+        //Signal::connect('model.deleted', array($this, 'addOrDeleteColumnsFromTable'));
+    }
+    
+    static function getDistricts($address) {
+        if(!$address) {
+            $query = "SELECT DISTINCT district FROM sincro_cabinet";
+            $result = db_query($query);
+
+            if ($result) {
+                $districts = [];
+                while ($row = db_fetch_array($result)) {
+                    $districts[] = $row['district'];
+                }
+                return $districts;
+            } else {
+                // Handle the case where the query fails
+                error_log("Error fetching isactive from ost_plugin table");
+                return false; // Return false if unable to fetch isactive
+            }
+        } else {
+            $query = "SELECT DISTINCT district FROM sincro_cabinet WHERE address = '$address'";
+            $result = db_query($query);
+
+            if ($result) {
+                $districts = [];
+                while ($row = db_fetch_array($result)) {
+                    $districts[] = $row['district'];
+                }
+                return $districts;
+            } else {
+                // Handle the case where the query fails
+                error_log("Error fetching isactive from ost_plugin table");
+                return false; // Return false if unable to fetch isactive
+            }
+        }
+    }
+    
+    static function getAddresses($district) {
+        if(!$district) {
+            $query = "SELECT DISTINCT address FROM sincro_cabinet";
+            $result = db_query($query);
+
+            if ($result) {
+                $addresses = [];
+                while ($row = db_fetch_array($result)) {
+                    $addresses[] = $row['address'];
+                }
+                return $addresses;
+            } else {
+                // Handle the case where the query fails
+                error_log("Error fetching isactive from ost_plugin table");
+                return false; // Return false if unable to fetch isactive
+            }
+        } else {
+            $query = "SELECT DISTINCT address FROM sincro_cabinet WHERE district = '$district'";
+            $result = db_query($query);
+
+            if ($result) {
+                $addresses = [];
+                while ($row = db_fetch_array($result)) {
+                    $addresses[] = $row['address'];
+                }
+                return $addresses;
+            } else {
+                error_log("Error fetching isactive from ost_plugin table");
+                return false; 
+            }
+        }
     }
     
     function addFields() {
