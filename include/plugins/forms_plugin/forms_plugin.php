@@ -82,7 +82,7 @@ class FormsPlugin extends Plugin {
     
     static function getCabinets($address, $district) {
         if($address){
-            $query = "SELECT (model, serial_number) FROM sincro_cabinet WHERE address = '$address'";
+            $query = "SELECT model, serial_number FROM sincro_cabinet WHERE address = '$address'";
             $result = db_query($query);
 
             if ($result) {
@@ -96,9 +96,34 @@ class FormsPlugin extends Plugin {
                 return false; 
             }
         } else if($district){
-            
-        }
-            
+            $query = "SELECT model, serial_number FROM sincro_cabinet WHERE district = '$district'";
+            $result = db_query($query);
+
+            if ($result) {
+                $cabinets = [];
+                while ($row = db_fetch_array($result)) {
+                    $cabinets[] = $row['model'] . $row['serial_number'];
+                }
+                return $cabinets;
+            } else {
+                error_log("Error fetching isactive from ost_plugin table");
+                return false; 
+            }
+        } else if($address && $district) {
+            $query = "SELECT model, serial_number FROM sincro_cabinet WHERE district = '$district' AND address = '$address'";
+            $result = db_query($query);
+
+            if ($result) {
+                $cabinets = [];
+                while ($row = db_fetch_array($result)) {
+                    $cabinets[] = $row['model'] . $row['serial_number'];
+                }
+                return $cabinets;
+            } else {
+                error_log("Error fetching isactive from ost_plugin table");
+                return false; 
+            }
+        } 
     }
     
     
