@@ -356,7 +356,7 @@ if ($_POST)
             <tr>
                 <td width="160"><?php echo __('Distrito');?>:</td>
                 <td>
-                    <select name="district_option" id="district_option" onchange="updateAddressOptions()">
+                    <select name="district_option" id="district_option" onchange="(() => {updateAddressOptions(); updateCabinOptionsbyAddress();})()">
                         <option value="" selected><?php echo __('-Select District-');?></option>
                         <?php 
                         $districtOptions = FormsPlugin::getDistricts(null);
@@ -382,6 +382,14 @@ if ($_POST)
                             echo '<option value="' . $option . '" ' . $selected . '>' . $option . '</option>';
                         }
                         ?>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td width="160"><?php echo __('Cabine');?>:</td>
+                <td>
+                    <select name="cabinet_option" id="cabinet_option">
+                        <option value="" selected><?php echo __('-Cabinet-');?></option>
                     </select>
                 </td>
             </tr>
@@ -636,20 +644,23 @@ $(function() {
 </script>
 
 <script>
+function updateCabinAndAddressOptions(){
+    updateAdressOptions();
+    updateCabinOptions();
+}
 // Define the updateAddressOptions function to fetch and populate address options based on the selected district
 function updateAddressOptions() {
     var selectedDistrict = document.getElementById("district_option").value;
     var addressCombobox = document.getElementById("address_option");
     
+    var cabinetCombobox = document.getElementById("cabinet_option");
     // Clear existing options
     addressCombobox.innerHTML = "";
-
     // Fetch addresses for the selected district via AJAX
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
             var addresses = JSON.parse(this.responseText);
-
             // Populate options for the address combobox
             addresses.forEach(function(address) {
                 var option = document.createElement("option");
@@ -668,8 +679,7 @@ function updateAddressOptions() {
     xmlhttp.open("GET", url, true);
     xmlhttp.send();
 }
-
-// Define the updateAddressOptions function to fetch and populate address options based on the selected district
+// Define the updateDistrictOptions function to fetch and populate district options based on the selected address
 function updateDistrictOptions() {
     var selectedAddress = document.getElementById("address_option").value;
     var districtCombobox = document.getElementById("district_option");
@@ -699,6 +709,39 @@ function updateDistrictOptions() {
         }
     };
     var url = "get_districts.php?address=" + encodeURIComponent(selectedAddress);
+    xmlhttp.open("GET", url, true);
+    xmlhttp.send();
+}
+// Define the updateCabinOptions function to fetch and populate district options based on the selected address
+function updateCabinOptionsbyAddress() {
+    var selectedAddress = document.getElementById("address_option").value;
+    var cabinetCombobox = document.getElementById("cabinet_option");
+    
+    // Clear existing options
+    cabinetCombobox.innerHTML = "";
+
+    // Fetch addresses for the selected district via AJAX
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var cabinets = JSON.parse(this.responseText);
+
+            // Populate options for the cabinet combobox
+            cabinets.forEach(function(cabinet) {
+                var option = document.createElement("option");
+                option.value = cabinet;
+                option.text = cabinet;
+                cabinetCombobox.add(option);
+            });
+            
+            var defaultOption = document.createElement("option");
+            defaultOption.value = ""; // Set default value
+            defaultOption.text = "-Cabinet-"; // Set default text
+            cabinetCombobox.add(defaultOption);
+            
+        }
+    };
+    var url = "get_cabinets.php?address=" + encodeURIComponent(selectedAddress);
     xmlhttp.open("GET", url, true);
     xmlhttp.send();
 }

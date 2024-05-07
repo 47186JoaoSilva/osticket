@@ -80,6 +80,28 @@ class FormsPlugin extends Plugin {
         }
     }
     
+    static function getCabinets($address, $district) {
+        if($address){
+            $query = "SELECT (model, serial_number) FROM sincro_cabinet WHERE address = '$address'";
+            $result = db_query($query);
+
+            if ($result) {
+                $cabinets = [];
+                while ($row = db_fetch_array($result)) {
+                    $cabinets[] = $row['model'] . $row['serial_number'];
+                }
+                return $cabinets;
+            } else {
+                error_log("Error fetching isactive from ost_plugin table");
+                return false; 
+            }
+        } else if($district){
+            
+        }
+            
+    }
+    
+    
     function addFields() {
         if($this->isPluginActive()) {
             $this->addCabinInfo();
