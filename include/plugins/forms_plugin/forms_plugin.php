@@ -146,7 +146,7 @@ class FormsPlugin extends Plugin {
         $routerInfoResult = db_query($routerInfoQuery);
         if ($routerInfoResult) {
             while ($row = db_fetch_array($routerInfoResult)) {
-                    $result[] = "Fornecedor:" . $row['suplier'] . " Model: " . $row['model'] . " Nº Série: " . $row['serial_number'];
+                    $result[] = "Fornecedor: " . $row['suplier'] . " Model: " . $row['model'] . " Nº Série: " . $row['serial_number'];
             }
         }
         
