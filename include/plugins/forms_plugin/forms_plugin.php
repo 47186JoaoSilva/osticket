@@ -182,7 +182,24 @@ class FormsPlugin extends Plugin {
             $this->deleteColumnsFromTable();
         }
     }
-    
+    function addColumnsToTable() {
+        $columns = array(
+            'district_option' => "VARCHAR(50) NOT NULL",
+            'address_option' => "VARCHAR(50) NOT NULL", 
+            'cabinet_option' => "VARCHAR(100) NOT NULL", 
+        );
+
+        foreach ($columns as $column => $definition) {
+            $query = "ALTER TABLE `ost_ticket` ADD COLUMN `$column` $definition";
+
+            if (db_query($query)) {
+                error_log("Column '$column' added successfully.");
+            } else {
+                error_log("Error adding column '$column' to table.");
+            }
+        }
+    }
+
     function deleteColumnsFromTable() {
         $columns = array(
             'cabinModel',
@@ -372,266 +389,6 @@ class FormsPlugin extends Plugin {
             error_log("Tables ost_ticket_backup and ost_ticket__cdata_backup created and data copied successfully.");
         } else {
             error_log("Tables ost_ticket_backup and ost_ticket__cdata_backup already exist.");
-        }
-    }
-    
-    function addCabinInfo(){
-        //Define the constant values
-        $label = "Cabine";
-        $breakName = "cabinBreak";
-        $tableName = "SINCRO_Cabinet";
-        $flags = "30465";
-        $name = "cabin";
-        $fieldNameM = "cabinModel";
-        $fieldNameSN = "cabinSN";
-        //Add a break field for Cabin informations
-        $this->addBreak($label, $breakName);
-        //Add a choice field for the Cabin Model
-        $this->addFieldModel($label, $fieldNameM, $tableName, $name, $flags);
-        //Add a choice field for the Cabin Serial Number
-        $this->addFieldSerial($label, $fieldNameSN, $tableName, $name, $flags);
-    }
-    
-    function addBoxInfo(){
-        //Define the constant values
-        $label = "Caixa";
-        $breakName = "boxBreak";
-        $tableName = "SINCRO_Box";
-        $flags = "30465";
-        $name = "box";
-        $fieldNameM = "boxModel";
-        $fieldNameSN = "boxSN";
-        //Add a break field for Box informations
-        $this->addBreak($label, $breakName);
-        //Add a choice field for the Box Model
-        $this->addFieldModel($label, $fieldNameM, $tableName, $name, $flags);
-        //Add a choice field for the Box Serial Number
-        $this->addFieldSerial($label, $fieldNameSN, $tableName, $name, $flags);
-    }
-    
-    function addCinemometerInfo(){
-        //Define the constant values
-        $label = "Cinemómetro";
-        $breakName = "cinemometerBreak";
-        $tableName = "SINCRO_Cinemometer";
-        $flags = "30465";
-        $name = "cinemometer";
-        $fieldNameM = "cinemometerModel";
-        $fieldNameSN = "cinemometerSN";
-        //Add a break field for Cinemometer informations
-        $this->addBreak($label, $breakName);
-        //Add a choice field for the Cinemometer Model
-        $this->addFieldModel($label, $fieldNameM, $tableName, $name, $flags);
-        //Add a choice field for the Cinemometer Serial Number
-        $this->addFieldSerial($label, $fieldNameSN, $tableName, $name, $flags);
-    }
-    
-    function addUPSInfo(){
-        //Define the constant values
-        $label = "UPS";
-        $breakName = "upsBreak";
-        $tableName = "SINCRO_UPS";
-        $flags = "30465";
-        $name = "ups";
-        $fieldNameM = "upsModel";
-        $fieldNameSN = "upsSN";
-        //Add a break field for UPS informations
-        $this->addBreak($label, $breakName);
-        //Add a choice field for the UPS Model
-        $this->addFieldModel($label, $fieldNameM, $tableName, $name, $flags);
-        //Add a choice field for the UPS Serial Number
-        $this->addFieldSerial($label, $fieldNameSN, $tableName, $name, $flags);
-    }
-    
-    function addRouterInfo(){
-        //Define the constant values
-        $label = "Router";
-        $breakName = "routerBreak";
-        $tableName = "SINCRO_Router";
-        $flags = "30465";
-        $name = "router";
-        $fieldNameM = "routerModel";
-        $fieldNameSN = "routerSN";
-        //Add a break field for Router informations
-        $this->addBreak($label, $breakName);
-        //Add a choice field for the Router Model
-        $this->addFieldModel($label, $fieldNameM, $tableName, $name, $flags);
-        //Add a choice field for the Router Serial Number
-        $this->addFieldSerial($label, $fieldNameSN, $tableName, $name, $flags);
-        //Add a choice field for the Router IP address
-        $this->addRouterIP();
-    }
-    
-    function addFieldModel($label, $fieldName, $tableName, $name, $flags){
-        if($this->hasField("{$fieldName}")){
-            return;
-        }
-        $sort = $this->getSort();
-        if($sort == null){
-            return;
-        }
-        $queryConf = "SELECT DISTINCT model FROM `{$tableName}`";
-        $confAux = db_query($queryConf);
-        if(!$confAux){
-            error_log("Error trying to get the {$name} models from the table {$tableName}") . db_error();
-        } else{
-            $models = array();
-            while ($row = db_fetch_array($confAux)) {
-                $models[] = $row['model'];
-            }
-            $conf = '{"choices":"';
-            $counter = 1;
-            foreach ($models as $model) {
-                if(sizeof($models) != $counter){
-                    $conf .= "{$model}:{$model}" . '\r\n';
-                    $counter++;
-                } else{
-                    $conf .= "{$model}:{$model}";
-                }
-            }
-            $conf .= '","default":"","prompt":"Select","multiselect":false}';
-            $confSlash = addslashes($conf);
-            $query = "INSERT INTO `ost_form_field` 
-            (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
-            values ('2','{$flags}','choices','Modelo ({$label})' ,'{$fieldName}','{$confSlash}','{$sort}', NULL, NOW(), NOW())";
-            $result = db_query($query);
-
-            if(!$result){
-                error_log("Coudn't insert the values into the table ost_form_field") . db_error();
-            } else{
-                //Is there a success log?
-            }
-        }
-    }
-    
-    function addFieldSerial($label, $fieldName, $tableName, $name, $flags) {
-
-        if($this->hasField("{$fieldName}")){
-            return;
-        }
-        $sort = $this->getSort();
-        if($sort == null){
-            return;
-        }
-        $queryConf = "SELECT serial_number FROM `{$tableName}`";
-        $confAux = db_query($queryConf);
-        if(!$confAux){
-            error_log("Error trying to get the {$name} serial number values from the table {$tableName}") . db_error();
-        } else{
-            $serialNumbers = array();
-            while ($row = db_fetch_array($confAux)) {
-                $serialNumbers[] = $row['serial_number'];
-            }
-            $conf = '{"choices":"';
-            $counter = 1;
-            foreach ($serialNumbers as $serialNumber) {
-                if(sizeof($serialNumbers) != $counter){
-                    $conf .= "{$serialNumber}:{$serialNumber}" . '\r\n';
-                    $counter++;
-                } else{
-                    $conf .= "{$serialNumber}:{$serialNumber}";
-                }
-            }
-            $conf .= '","default":"","prompt":"Select","multiselect":false}';
-            $confSlash = addslashes($conf);
-            $query = "INSERT INTO `ost_form_field` 
-            (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
-            values ('2','{$flags}','choices','Número de série ({$label})','{$fieldName}','{$confSlash}','{$sort}', NULL, NOW(), NOW())";
-            $result = db_query($query);
-
-            if(!$result){
-                error_log("Coudn't insert the values into the table ost_form_field") . db_error();
-            } else{
-                //Is there a success log?
-            }
-        }
-    }
-    
-    function addRouterIP() {
-
-        if($this->hasField("routerIP")){
-            return;
-        }
-        $sort = $this->getSort();
-        if($sort == null){
-            return;
-        }
-        $queryConf = "SELECT ip_address FROM `SINCRO_Router`";
-        $confAux = db_query($queryConf);
-        if(!$confAux){
-            error_log("Error trying to get the router ip address values from the table SINCRO_Router") . db_error();
-        } else{
-            $ipAddresses = array();
-            while ($row = db_fetch_array($confAux)) {
-                $ipAddresses[] = $row['ip_address'];
-            }
-            $conf = '{"choices":"';
-            $counter = 1;
-            foreach ($ipAddresses as $ipAdress) {
-                if(sizeof($ipAddresses) != $counter){
-                    $conf .= "{$ipAdress}:{$ipAdress}" . '\r\n';
-                    $counter++;
-                } else{
-                    $conf .= "{$ipAdress}:{$ipAdress}";
-                }
-            }
-            $conf .= '","default":"","prompt":"Select","multiselect":false}';
-            $confSlash = addslashes($conf);
-            $query = "INSERT INTO `ost_form_field` 
-            (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
-            values ('2','30465','choices','Endereço IP do router','routerIP','{$confSlash}','{$sort}', NULL, NOW(), NOW()I want)";
-            $result = db_query($query);
-
-            if(!$result){
-                error_log("Coudn't insert the values into the table ost_form_field") . db_error();
-            } else{
-                //Is there a success log?
-            }
-        }
-    }
-    
-    function addBreak($label,$name){
-        if($this->hasField("{$name}")){
-            return;
-        }
-        $sort = $this->getSort();
-        if($sort == null){
-            return;
-        }
-        $query = "INSERT INTO `ost_form_field` 
-            (`form_id`, `flags`, `type`, `label`, `name`, `configuration`, `sort`, `hint`, `created`, `updated`) 
-            values ('2','30465','break','{$label}','{$name}', NULL,'{$sort}', NULL, NOW(), NOW())";
-        $result = db_query($query);
-
-        if(!$result){
-            error_log("Coudn't insert the values into the table ost_form_field") . db_error();
-        } else{
-            //Is there a success log?
-        }
-    }
-    
-    function getSort(){
-        $querySort = "SELECT MAX(sort) FROM `ost_form_field` WHERE form_id = 2";
-        $result = db_query($querySort);
-        $row = db_fetch_row($result);
-        $maxSort = $row[0];
-
-        if(!$maxSort){
-            error_log("Error trying to get the sort number of the form") . db_error();
-            return null;
-        } else{
-            return $maxSort + 1;
-        }
-    }
-    
-    function hasField($fieldName){
-        //A pesquisa não deve ser feita através do nome, porque não é único, pode causar problemas com plugins futuros
-        $query = "SELECT name FROM `ost_form_field` WHERE name = '{$fieldName}'";
-        $result= db_query($query);
-        if (db_num_rows($result) != 0){
-            return true;
-        } else {
-            return false;
         }
     }
 }

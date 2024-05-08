@@ -4114,6 +4114,10 @@ implements RestrictedAccess, Threadable, Searchable {
                 $fields['deptId']   = array('type'=>'int',  'required'=>0, 'error'=>__('Department selection is required'));
                 $fields['topicId']  = array('type'=>'int',  'required'=>1, 'error'=>__('Help topic selection is required'));
                 $fields['duedate']  = array('type'=>'date', 'required'=>0, 'error'=>__('Invalid date format - must be MM/DD/YY'));
+                $fields['district_option']  = array('type'=>'string',  'required'=>1, 'error'=>__('District selection is required'));
+                $fields['address_option']  = array('type'=>'string',  'required'=>1, 'error'=>__('Address selection is required'));
+                $fields['cabinet_option']  = array('type'=>'string',  'required'=>1, 'error'=>__('Cabinet selection is required'));
+                
             case 'api':
                 $fields['source']   = array('type'=>'string', 'required'=>1, 'error'=>__('Indicate ticket source'));
                 break;
@@ -4364,6 +4368,9 @@ implements RestrictedAccess, Threadable, Searchable {
             'topic_id' => $topicId,
             'ip_address' => $ipaddress,
             'source' => $source,
+            'district_option' => $district_option,
+            'address_option' => $address_option,
+            'cabinet_option' => $cabinet_option,
         ));
 
         if (isset($vars['emailId']) && $vars['emailId'])
@@ -4374,7 +4381,18 @@ implements RestrictedAccess, Threadable, Searchable {
             $ticket->duedate = date('Y-m-d G:i',
                 Misc::dbtime($vars['duedate']));
 
-
+        if (isset($vars['district_option'])) {
+            $ticket->district_option = $vars['district_option'];
+        }
+        
+        if (isset($vars['address_option'])) {
+            $ticket->address_option = $vars['address_option'];
+        }
+        
+        if (isset($vars['cabinet_option'])) {
+            $ticket->cabinet_option = $vars['cabinet_option'];
+        }
+        
         if (!$ticket->save())
             return null;
         if (!($thread = TicketThread::create($ticket->getId())))

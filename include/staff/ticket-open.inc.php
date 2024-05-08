@@ -354,7 +354,7 @@ if ($_POST)
                 </th>
             </tr>
             <tr>
-                <td width="160"><?php echo __('Distrito');?>:</td>
+                <td width="160" class="required"><?php echo __('Distrito');?>:</td>
                 <td>
                     <select name="district_option" id="district_option" onchange="updateAddressOptions();">
                         <option value="" selected><?php echo __('-Select District-');?></option>
@@ -367,6 +367,7 @@ if ($_POST)
                         }
                         ?>
                     </select>
+                    &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['district_option']; ?></font>
                 </td>
             </tr>
             <tr>
@@ -383,6 +384,7 @@ if ($_POST)
                         }
                         ?>
                     </select>
+                    &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['address_option']; ?></font>
                 </td>
             </tr>
             <tr>
@@ -391,6 +393,7 @@ if ($_POST)
                     <select name="cabinet_option" id="cabinet_option" onchange="updateEquipments();">
                         <option value="" selected><?php echo __('-Select Cabinet-');?></option>
                     </select>
+                    &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['cabinet_option']; ?></font>
                 </td>
             </tr>
             <tr>
@@ -788,16 +791,16 @@ function updateEquipments() {
                 // Create checkboxes based on fetched values
                 checkboxValues.forEach(function(checkboxValue, index) {
                     var checkboxDiv = document.createElement("div");
-                    checkboxDiv.className = "checkbox-item"; // Add a class for styling purposes
+                    checkboxDiv.className = "checkbox-item";
                     
                     // Create checkbox label with text in bold
                     var label = document.createElement("label");
-                    label.innerHTML = "<strong>" + equipments[index] +": </strong>" + checkboxValue; // Use checkbox value as label
+                    label.innerHTML = "<strong>" + equipments[index] +": </strong>" + checkboxValue;
                     checkboxDiv.appendChild(label);
                     
                     var checkbox = document.createElement("input");
                     checkbox.type = "checkbox";
-                    checkbox.name = "checkbox_name[]"; // Assuming you want an array of checkbox values
+                    checkbox.name = "checkbox_name[]";
                     checkbox.value = checkboxValue;
                     checkboxDiv.appendChild(checkbox);
                     
