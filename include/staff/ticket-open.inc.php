@@ -356,7 +356,7 @@ if ($_POST)
             <tr>
                 <td width="160"><?php echo __('Distrito');?>:</td>
                 <td>
-                    <select name="district_option" id="district_option" onchange="(() => {updateAddressOptions(); updateCabinOptions();})()">
+                    <select name="district_option" id="district_option" onchange="updateAddressOptions();">
                         <option value="" selected><?php echo __('-Select District-');?></option>
                         <?php 
                         $districtOptions = FormsPlugin::getDistricts(null);
@@ -388,9 +388,15 @@ if ($_POST)
             <tr>
                 <td width="160"><?php echo __('Cabine');?>:</td>
                 <td>
-                    <select name="cabinet_option" id="cabinet_option">
+                    <select name="cabinet_option" id="cabinet_option" onchange="updateEquipments();">
                         <option value="" selected><?php echo __('-Select Cabinet-');?></option>
                     </select>
+                </td>
+            </tr>
+            <tr>
+                <td width="160"><?php echo __('Equipamentos Avariados');?>:</td>
+                <td>
+                    <div id="checkbox_container"></div>
                 </td>
             </tr>
         </tbody>
@@ -644,10 +650,6 @@ $(function() {
 </script>
 
 <script>
-function updateCabinAndAddressOptions(){
-    updateAdressOptions();
-    updateCabinOptions();
-}
 // Define the updateAddressOptions function to fetch and populate address options based on the selected district
 function updateAddressOptions() {
     var selectedDistrict = document.getElementById("district_option").value;
@@ -729,7 +731,6 @@ function updateDistrictOptions() {
 }
 // Define the updateCabinOptions function to fetch and populate cabinet options based on the selected district and address
 function updateCabinOptions() {
-    var selectedDistrict = document.getElementById("district_option").value;
     var selectedAddress = document.getElementById("address_option").value;
     var cabinetCombobox = document.getElementById("cabinet_option");
     
@@ -737,7 +738,7 @@ function updateCabinOptions() {
     cabinetCombobox.innerHTML = "";
 
     // Check if either district or address has a non-default value
-    if (selectedDistrict !== "" || selectedAddress !== "") {
+    if (selectedAddress !== "") {
         // Fetch cabinets only if either district or address is selected
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.onreadystatechange = function() {
@@ -760,7 +761,7 @@ function updateCabinOptions() {
         };
 
         // Fetch cabinets based on the selected district and address
-        var url = "get_cabinets.php?district=" + encodeURIComponent(selectedDistrict) + "&address=" + encodeURIComponent(selectedAddress);
+        var url = "get_cabinets.php?address=" + encodeURIComponent(selectedAddress);
         xmlhttp.open("GET", url, true);
         xmlhttp.send();
     } else {
@@ -772,4 +773,43 @@ function updateCabinOptions() {
     }
 }
 
+function updateEquipments() {
+    var selectedCabinet = document.getElementById("cabinet_option").value;
+    var checkboxContainer = document.getElementById("checkbox_container");
+    checkboxContainer.innerHTML = "";
+     
+    // If a cabinet is selected, fetch checkbox values from the server
+    if (selectedCabinet !== "") {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                var checkboxValues = JSON.parse(this.responseText);
+                var equipments = ['Cinemómetro','Router','UPS'];
+                // Create checkboxes based on fetched values
+                checkboxValues.forEach(function(checkboxValue, index) {
+                    var checkboxDiv = document.createElement("div");
+                    checkboxDiv.className = "checkbox-item"; // Add a class for styling purposes
+                    
+                    // Create checkbox label with text in bold
+                    var label = document.createElement("label");
+                    label.innerHTML = "<strong>" + equipments[index] +": </strong>" + checkboxValue; // Use checkbox value as label
+                    checkboxDiv.appendChild(label);
+                    
+                    var checkbox = document.createElement("input");
+                    checkbox.type = "checkbox";
+                    checkbox.name = "checkbox_name[]"; // Assuming you want an array of checkbox values
+                    checkbox.value = checkboxValue;
+                    checkboxDiv.appendChild(checkbox);
+                    
+                    checkboxContainer.appendChild(checkboxDiv);
+                });
+            }
+        };
+
+        // Fetch checkbox values from the server based on the selected cabinet
+        var url = "get_checkbox_values.php?cabinet=" + encodeURIComponent(selectedCabinet);
+        xmlhttp.open("GET", url, true);
+        xmlhttp.send();
+    }
+}
 </script>

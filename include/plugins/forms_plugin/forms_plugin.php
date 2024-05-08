@@ -88,35 +88,7 @@ class FormsPlugin extends Plugin {
             if ($result) {
                 $cabinets = [];
                 while ($row = db_fetch_array($result)) {
-                    $cabinets[] = $row['model'] . $row['serial_number'];
-                }
-                return $cabinets;
-            } else {
-                error_log("Error fetching isactive from ost_plugin table");
-                return false; 
-            }
-        } else if($district){
-            $query = "SELECT model, serial_number FROM sincro_cabinet WHERE district = '$district'";
-            $result = db_query($query);
-
-            if ($result) {
-                $cabinets = [];
-                while ($row = db_fetch_array($result)) {
-                    $cabinets[] = $row['model'] . $row['serial_number'];
-                }
-                return $cabinets;
-            } else {
-                error_log("Error fetching isactive from ost_plugin table");
-                return false; 
-            }
-        } else if($address && $district) {
-            $query = "SELECT model, serial_number FROM sincro_cabinet WHERE district = '$district' AND address = '$address'";
-            $result = db_query($query);
-
-            if ($result) {
-                $cabinets = [];
-                while ($row = db_fetch_array($result)) {
-                    $cabinets[] = $row['model'] . $row['serial_number'];
+                    $cabinets[] = "Model: " . $row['model'] . " Nº Série: " . $row['serial_number'];
                 }
                 return $cabinets;
             } else {
@@ -126,6 +98,68 @@ class FormsPlugin extends Plugin {
         } 
     }
     
+    static function getEquipments($serialNumber) {
+        $cabinId = "";
+        $cinemometerId = "";
+        $routerId = "";
+        $upsId = "";
+        
+        $cabinIdQuery = "SELECT id FROM SINCRO_Cabinet WHERE serial_number = '$serialNumber'";
+        $cabinIdresult = db_query($cabinIdQuery);
+        if ($cabinIdresult) {
+            $row = db_fetch_array($cabinIdresult);
+            $cabinId = $row['id']; 
+        }
+        
+        $cinemometerIdQuery = "SELECT idCinemometer FROM SINCRO_Cabinet_has_Cinemometer WHERE idCabin = '$cabinId'";
+        $cinemometerIdResult = db_query($cinemometerIdQuery);
+        if ($cinemometerIdResult) {
+            $row = db_fetch_array($cinemometerIdResult);
+            $cinemometerId = $row['idCinemometer']; 
+        }
+        
+        $routerIdQuery = "SELECT idRouter FROM SINCRO_Cabinet_has_Router WHERE idCabin = '$cabinId'";
+        $routerIdResult = db_query($routerIdQuery);
+        if ($routerIdResult) {
+            $row = db_fetch_array($routerIdResult);
+            $routerId = $row['idRouter']; 
+        }
+
+        $upsIdQuery = "SELECT id_ups FROM SINCRO_Cabinet WHERE id = '$cabinId'";
+        $upsIdresult = db_query($upsIdQuery);
+        if ($upsIdresult) {
+            $row = db_fetch_array($upsIdresult);
+            $upsId = $row['id_ups']; 
+        }
+        
+        $result = [];
+        
+        $cinemometerInfoQuery = "SELECT model, suplier, serial_number FROM SINCRO_Cinemometer WHERE id = '$cinemometerId'";
+        $cinemometerInfoResult = db_query($cinemometerInfoQuery);
+        if ($cinemometerInfoResult) {
+            while ($row = db_fetch_array($cinemometerInfoResult)) {
+                    $result[] = "Fornecedor:" . $row['suplier'] . " Model: " . $row['model'] . " Nº Série: " . $row['serial_number'];
+            }
+        }
+        
+        $routerInfoQuery = "SELECT model, suplier, serial_number FROM SINCRO_Router WHERE id = '$routerId'";
+        $routerInfoResult = db_query($routerInfoQuery);
+        if ($routerInfoResult) {
+            while ($row = db_fetch_array($routerInfoResult)) {
+                    $result[] = "Fornecedor:" . $row['suplier'] . " Model: " . $row['model'] . " Nº Série: " . $row['serial_number'];
+            }
+        }
+        
+        $upsInfoQuery = "SELECT model, suplier, serial_number FROM SINCRO_UPS WHERE id = '$upsId'";
+        $upsInfoResult = db_query($upsInfoQuery);
+        if ($upsInfoResult) {
+            while ($row = db_fetch_array($upsInfoResult)) {
+                    $result[] = "Fornecedor:" . $row['suplier'] . " Model: " . $row['model'] . " Nº Série: " . $row['serial_number'];
+            }
+        }
+        
+        return $result;
+    }
     
     function addFields() {
         if($this->isPluginActive()) {
