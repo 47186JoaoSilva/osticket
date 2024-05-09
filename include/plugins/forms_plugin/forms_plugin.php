@@ -140,7 +140,7 @@ class FormsPlugin extends Plugin {
         $cinemometerInfoResult = db_query($cinemometerInfoQuery);
         if ($cinemometerInfoResult) {
             while ($row = db_fetch_array($cinemometerInfoResult)) {
-                    $result[] = "Fornecedor:\\n" . $row['suplier'] . " Model:\\n" . $row['model'];
+                    $result[] = "Fornecedor: " . $row['suplier'] . " Model: " . $row['model'];
             }
         }
         
@@ -148,7 +148,7 @@ class FormsPlugin extends Plugin {
         $routerInfoResult = db_query($routerInfoQuery);
         if ($routerInfoResult) {
             while ($row = db_fetch_array($routerInfoResult)) {
-                    $result[] = "Fornecedor:\\n" . $row['suplier'] . " Model:\\n" . $row['model'];
+                    $result[] = "Fornecedor: " . $row['suplier'] . " Model: " . $row['model'];
             }
         }
         
@@ -156,7 +156,7 @@ class FormsPlugin extends Plugin {
         $upsInfoResult = db_query($upsInfoQuery);
         if ($upsInfoResult) {
             while ($row = db_fetch_array($upsInfoResult)) {
-                    $result[] = "Fornecedor:\\n" . $row['suplier'] . " Model:\\n" . $row['model'];
+                    $result[] = "Fornecedor: " . $row['suplier'] . " Model: " . $row['model'];
             }
         }
         
