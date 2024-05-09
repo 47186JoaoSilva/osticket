@@ -11,6 +11,7 @@ class FormsPlugin extends Plugin {
         //Signal::connect('model.updated', array($this, 'addFields'));
         //Signal::connect('model.updated', array($this, 'addOrDeleteColumnsFromTable'));
         //Signal::connect('model.deleted', array($this, 'addOrDeleteColumnsFromTable'));
+        Signal::connect('model.updated', array($this, 'addOrDeleteColumnsFromTable'));
     }
     
     static function getDistricts($address) {
@@ -104,6 +105,7 @@ class FormsPlugin extends Plugin {
         $routerId = "";
         $upsId = "";
         
+        //PODE SE TROCAR PELO CODIGO DAS FUNÇOES ABAIXO
         $cabinIdQuery = "SELECT id FROM SINCRO_Cabinet WHERE serial_number = '$serialNumber'";
         $cabinIdresult = db_query($cabinIdQuery);
         if ($cabinIdresult) {
@@ -138,7 +140,7 @@ class FormsPlugin extends Plugin {
         $cinemometerInfoResult = db_query($cinemometerInfoQuery);
         if ($cinemometerInfoResult) {
             while ($row = db_fetch_array($cinemometerInfoResult)) {
-                    $result[] = "Fornecedor:" . $row['suplier'] . " Model: " . $row['model'] . " Nº Série: " . $row['serial_number'];
+                    $result[] = "Fornecedor:\\n" . $row['suplier'] . " Model:\\n" . $row['model'];
             }
         }
         
@@ -146,7 +148,7 @@ class FormsPlugin extends Plugin {
         $routerInfoResult = db_query($routerInfoQuery);
         if ($routerInfoResult) {
             while ($row = db_fetch_array($routerInfoResult)) {
-                    $result[] = "Fornecedor: " . $row['suplier'] . " Model: " . $row['model'] . " Nº Série: " . $row['serial_number'];
+                    $result[] = "Fornecedor:\\n" . $row['suplier'] . " Model:\\n" . $row['model'];
             }
         }
         
@@ -154,39 +156,142 @@ class FormsPlugin extends Plugin {
         $upsInfoResult = db_query($upsInfoQuery);
         if ($upsInfoResult) {
             while ($row = db_fetch_array($upsInfoResult)) {
-                    $result[] = "Fornecedor:" . $row['suplier'] . " Model: " . $row['model'] . " Nº Série: " . $row['serial_number'];
+                    $result[] = "Fornecedor:\\n" . $row['suplier'] . " Model:\\n" . $row['model'];
             }
         }
         
         return $result;
     }
     
-    function addFields() {
-        if($this->isPluginActive()) {
-            $this->addCabinInfo();
-            $this->addBoxInfo();
-            $this->addCinemometerInfo();
-            $this->addUPSInfo();
-            $this->addRouterInfo();
+    static function getCabinetId($serialNumber) {
+        $cabinIdQuery = "SELECT id FROM SINCRO_Cabinet WHERE serial_number = '$serialNumber'";
+        $cabinIdresult = db_query($cabinIdQuery);
+        if ($cabinIdresult) {
+            $row = db_fetch_array($cabinIdresult);
+            return $row['id']; 
+        } else {
+            // Handle the case where the query fails
+            error_log("Error fetching cabinId from SINCRO_Cabinet table");
+            return false; // Return false if unable to fetch isactive
+        }
+    }
+    
+    static function getCinemometerId($cabinId) {
+        $cinemometerIdQuery = "SELECT idCinemometer FROM SINCRO_Cabinet_has_Cinemometer WHERE idCabin = '$cabinId'";
+        $cinemometerIdResult = db_query($cinemometerIdQuery);
+        if ($cinemometerIdResult) {
+            $row = db_fetch_array($cinemometerIdResult);
+            return $row['idCinemometer']; 
+        } else {
+            // Handle the case where the query fails
+            error_log("Error fetching cinemometerId from SINCRO_Cabinet_has_Cinemometer table");
+            return false; // Return false if unable to fetch isactive
+        }
+    }
+    
+    static function getRouterId($cabinId) {
+        $routerIdQuery = "SELECT idRouter FROM SINCRO_Cabinet_has_Router WHERE idCabin = '$cabinId'";
+        $routerIdResult = db_query($routerIdQuery);
+        if ($routerIdResult) {
+            $row = db_fetch_array($routerIdResult);
+            return $row['idRouter']; 
+        } else {
+            // Handle the case where the query fails
+            error_log("Error fetching routerId from SINCRO_Cabinet_has_Router table");
+            return false; // Return false if unable to fetch isactive
+        }
+    }
+    
+    static function getUpsId($cabinId) {
+        $upsIdQuery = "SELECT id_ups FROM SINCRO_Cabinet WHERE id = '$cabinId'";
+        $upsIdresult = db_query($upsIdQuery);
+        if ($upsIdresult) {
+            $row = db_fetch_array($upsIdresult);
+            return $row['id_ups']; 
+        } else {
+            // Handle the case where the query fails
+            error_log("Error fetching upsId from SINCRO_Cabinet table");
+            return false; // Return false if unable to fetch isactive
+        }
+    }
+    
+    static function getCabinInfo($cabinId) {
+        $cabinInfoQuery = "SELECT model, suplier FROM SINCRO_Cabinet WHERE id = '$cabinId'";
+        $cabinInfoResult = db_query($cabinInfoQuery);
+        if ($cabinInfoResult) {
+            while ($row = db_fetch_array($cabinInfoResult)) {
+                    return "Fornecedor: " . $row['suplier'] . " Model: " . $row['model'];
+            }
+        }
+    }
+    
+    static function getCinemometerInfo($cinemometerId) {
+        $cinemometerInfoQuery = "SELECT model, suplier, serial_number FROM SINCRO_Cinemometer WHERE id = '$cinemometerId'";
+        $cinemometerInfoResult = db_query($cinemometerInfoQuery);
+        if ($cinemometerInfoResult) {
+            while ($row = db_fetch_array($cinemometerInfoResult)) {
+                    return "Fornecedor: " . $row['suplier'] . " Model: " . $row['model'];
+            }
+        }
+    }
+    
+    static function getRouterInfo($routerId) {
+        $routerInfoQuery = "SELECT model, suplier, serial_number FROM SINCRO_Router WHERE id = '$routerId'";
+        $routerInfoResult = db_query($routerInfoQuery);
+        if ($routerInfoResult) {
+            while ($row = db_fetch_array($routerInfoResult)) {
+                    return "Fornecedor: " . $row['suplier'] . " Model: " . $row['model'];
+            }
+        }
+    }
+    
+    static function getUpsInfo($upsId) {
+        $upsInfoQuery = "SELECT model, suplier, serial_number FROM SINCRO_UPS WHERE id = '$upsId'";
+        $upsInfoResult = db_query($upsInfoQuery);
+        if ($upsInfoResult) {
+            while ($row = db_fetch_array($upsInfoResult)) {
+                    return "Fornecedor: " . $row['suplier'] . " Model: " . $row['model'];
+            }
+        }
+    }
+    
+    static function getDistrict($cabinId) {
+        $cabinDistrictQuery = "SELECT district FROM SINCRO_Cabinet WHERE id = '$cabinId'";
+        $cabinDistrictResult = db_query($cabinDistrictQuery);
+        if ($cabinDistrictResult) {
+            $row = db_fetch_array($cabinDistrictResult);
+            return $row['district']; 
+        }
+    }
+    
+    static function getAddress($cabinId) {
+        $cabinAddressQuery = "SELECT address FROM SINCRO_Cabinet WHERE id = '$cabinId'";
+        $cabinAddressResult = db_query($cabinAddressQuery);
+        if ($cabinAddressResult) {
+            $row = db_fetch_array($cabinAddressResult);
+            return $row['address']; 
         }
     }
     
     function addOrDeleteColumnsFromTable() {
         if($this->isPluginActive()) {
-            $this->copyBackupIfExists();
+            //$this->copyBackupIfExists();
+            $this->addColumnsToTable();
         }
         else {
             //TODO(): Add condition to see if the checkbox is checked or not
             //$this->createBackupTables();
-            $this->deleteLinesFromTable();
-            $this->deleteColumnsFromTable();
+            //$this->deleteLinesFromTable();
+            //$this->deleteColumnsFromTable();
         }
     }
+    
     function addColumnsToTable() {
         $columns = array(
-            'district_option' => "VARCHAR(50) NOT NULL",
-            'address_option' => "VARCHAR(50) NOT NULL", 
-            'cabinet_option' => "VARCHAR(100) NOT NULL", 
+            'cabinet_id' => "INT NOT NULL",
+            'cinemometer_id' => "INT DEFAULT NULL", 
+            'ups_id' => "INT DEFAULT NULL", 
+            'router_id' => "INT DEFAULT NULL", 
         );
 
         foreach ($columns as $column => $definition) {

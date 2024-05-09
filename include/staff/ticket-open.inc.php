@@ -780,7 +780,7 @@ function updateEquipments() {
     var selectedCabinet = document.getElementById("cabinet_option").value;
     var checkboxContainer = document.getElementById("checkbox_container");
     checkboxContainer.innerHTML = "";
-     
+    
     // If a cabinet is selected, fetch checkbox values from the server
     if (selectedCabinet !== "") {
         var xmlhttp = new XMLHttpRequest();
@@ -788,6 +788,10 @@ function updateEquipments() {
             if (this.readyState == 4 && this.status == 200) {
                 var checkboxValues = JSON.parse(this.responseText);
                 var equipments = ['Cinemómetro','Router','UPS'];
+                if(checkboxValues.length != equipments.length) {
+                    equipments = ['Router','UPS'];
+                }
+                
                 // Create checkboxes based on fetched values
                 checkboxValues.forEach(function(checkboxValue, index) {
                     var checkboxDiv = document.createElement("div");
@@ -801,7 +805,7 @@ function updateEquipments() {
                     var checkbox = document.createElement("input");
                     checkbox.type = "checkbox";
                     checkbox.name = "checkbox_name[]";
-                    checkbox.value = checkboxValue;
+                    checkbox.value = equipments[index] + ": " + checkboxValue;
                     checkboxDiv.appendChild(checkbox);
                     
                     checkboxContainer.appendChild(checkboxDiv);
@@ -813,6 +817,6 @@ function updateEquipments() {
         var url = "get_checkbox_values.php?cabinet=" + encodeURIComponent(selectedCabinet);
         xmlhttp.open("GET", url, true);
         xmlhttp.send();
-    }
+    } 
 }
 </script>

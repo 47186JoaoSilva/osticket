@@ -271,7 +271,47 @@ implements RestrictedAccess, Threadable, Searchable {
             return 'visual';
         return 'visual';
     }
+    
+    function getCabinetId(){
+        return $this->cabinet_id;
+    }
+    
+    function getCinemoterId(){
+        return $this->cinemometer_id;
+    }
+    
+    function getUpsId(){
+        return $this->ups_id;
+    }
+    
+    function getRouterId(){
+        return $this->router_id;
+    }
+    
+    function getDistrict() {
+        return FormsPlugin::getDistrict($this->getCabinetId());
+    }
+    
+    function getAddress() {
+        return FormsPlugin::getAddress($this->getCabinetId());
+    }
+    
+    function getCabinetInfo() {
+        return FormsPlugin::getCabinInfo($this->getCabinetId());
+    }
 
+    function getCinemometerInfo() {
+        return FormsPlugin::getCinemometerInfo($this->getCinemoterId());
+    }
+    
+    function getUpsInfo() {
+        return FormsPlugin::getUpsInfo($this->getUpsId());
+    }
+    
+    function getRouterInfo() {
+        return FormsPlugin::getRouterInfo($this->getRouterId());
+    }
+    
     function isMerged() {
         if (!is_null($this->getPid()) || $this->isParent())
             return true;
@@ -4356,7 +4396,8 @@ implements RestrictedAccess, Threadable, Searchable {
         $topicId = isset($topic) ? $topic->getId() : 0;
         $ipaddress = $vars['ip'] ?: $_SERVER['REMOTE_ADDR'];
         $source = $source ?: 'Web';
-
+        
+        
         //We are ready son...hold on to the rails.
         $number = $topic ? $topic->getNewTicketNumber() : $cfg->getNewTicketNumber();
         $ticket = new static(array(
@@ -4368,9 +4409,6 @@ implements RestrictedAccess, Threadable, Searchable {
             'topic_id' => $topicId,
             'ip_address' => $ipaddress,
             'source' => $source,
-            'district_option' => $district_option,
-            'address_option' => $address_option,
-            'cabinet_option' => $cabinet_option,
         ));
 
         if (isset($vars['emailId']) && $vars['emailId'])
@@ -4381,16 +4419,36 @@ implements RestrictedAccess, Threadable, Searchable {
             $ticket->duedate = date('Y-m-d G:i',
                 Misc::dbtime($vars['duedate']));
 
-        if (isset($vars['district_option'])) {
-            $ticket->district_option = $vars['district_option'];
-        }
-        
-        if (isset($vars['address_option'])) {
-            $ticket->address_option = $vars['address_option'];
-        }
-        
         if (isset($vars['cabinet_option'])) {
-            $ticket->cabinet_option = $vars['cabinet_option'];
+            preg_match('/Nº Série: ([^ ]+)/', $vars['cabinet_option'], $matches);
+            $serialNumber = $matches[1];
+            
+            $cinemometerFound = false;
+            $upsFound = false;
+            $routerFound = false;
+            foreach ($vars['checkbox_name'] as $string) {
+                if (strpos($string, 'Cinemómetro') !== false) {
+                    $cinemometerFound = true;
+                    break; // Exit the loop after finding "Cinemometer"
+                } else if (strpos($string, 'Router') !== false) {
+                    $routerFound = true;
+                    break; // Exit the loop after finding "Cinemometer"
+                } else if (strpos($string, 'UPS') !== false) {
+                    $upsFound = true;
+                    break; // Exit the loop after finding "Cinemometer"
+                }
+            }
+            
+            $ticket->cabinet_id = FormsPlugin::getCabinetId($serialNumber);
+            if($cinemometerFound) {
+                $ticket->cinemometer_id = FormsPlugin::getCinemometerId($ticket->cabinet_id);
+            }
+            if($upsFound) {
+                $ticket->ups_id = FormsPlugin::getUpsId($ticket->cabinet_id);
+            }
+            if($routerFound) {
+                $ticket->router_id = FormsPlugin::getRouterId($ticket->cabinet_id);
+            }
         }
         
         if (!$ticket->save())
