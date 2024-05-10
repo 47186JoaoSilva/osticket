@@ -373,16 +373,8 @@ if ($_POST)
             <tr>
                 <td width="160"><?php echo __('Morada');?>:</td>
                 <td>
-                    <select name="address_option" id="address_option" onchange="(() => {updateDistrictOptions(); updateCabinOptions();})()">
+                    <select name="address_option" id="address_option" onchange="updateCabinOptions();">
                         <option value="" selected><?php echo __('-Select Address-');?></option>
-                        <?php 
-                        $addressOptions = FormsPlugin::getAddresses(null);
-
-                        foreach ($addressOptions as $option) {
-                            $selected = ($info['address_option'] === $option) ? "selected" : ""; // Check if the option is selected
-                            echo '<option value="' . $option . '" ' . $selected . '>' . $option . '</option>';
-                        }
-                        ?>
                     </select>
                     &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['address_option']; ?></font>
                 </td>
@@ -692,46 +684,6 @@ function updateAddressOptions() {
     xmlhttp.open("GET", url, true);
     xmlhttp.send();
 }
-
-// Define the updateDistrictOptions function to fetch and populate district options based on the selected address
-function updateDistrictOptions() {
-    var selectedAddress = document.getElementById("address_option").value;
-    var districtCombobox = document.getElementById("district_option");  
-    // Store the currently selected district before updating options
-    var selectedDistrict = districtCombobox.value;
-    
-    // Clear existing options
-    districtCombobox.innerHTML = "";
-
-    // Fetch addresses for the selected district via AJAX
-    var xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-            var districts = JSON.parse(this.responseText);
-
-            var defaultOption = document.createElement("option");
-            defaultOption.value = ""; // Set default value
-            defaultOption.text = "-Select District-"; // Set default text
-            districtCombobox.add(defaultOption);
-
-            // Populate options for the address combobox
-            districts.forEach(function(district) {
-                var option = document.createElement("option");
-                option.value = district;
-                option.text = district;
-                districtCombobox.add(option);
-            });
-
-            // Keep the selected district if it's not a default option
-            if (selectedDistrict && districts.includes(selectedDistrict)) {
-                districtCombobox.value = selectedDistrict;
-            }
-        }
-    };
-    var url = "get_districts.php?address=" + encodeURIComponent(selectedAddress);
-    xmlhttp.open("GET", url, true);
-    xmlhttp.send();
-}
 // Define the updateCabinOptions function to fetch and populate cabinet options based on the selected district and address
 function updateCabinOptions() {
     var selectedAddress = document.getElementById("address_option").value;
@@ -810,6 +762,22 @@ function updateEquipments() {
                     
                     checkboxContainer.appendChild(checkboxDiv);
                 });
+                
+                    var checkboxDiv = document.createElement("div");
+                    checkboxDiv.className = "checkbox-item";
+                    
+                    // Create checkbox label with text in bold
+                    var label = document.createElement("label");
+                    label.innerHTML = "<strong>Outro</strong>";
+                    checkboxDiv.appendChild(label);
+                    
+                    var checkbox = document.createElement("input");
+                    checkbox.type = "checkbox";
+                    checkbox.name = "checkbox_name[]";
+                    checkbox.value = "Outro";
+                    checkboxDiv.appendChild(checkbox);
+                    
+                    checkboxContainer.appendChild(checkboxDiv);
             }
         };
 

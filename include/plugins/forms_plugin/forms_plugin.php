@@ -48,36 +48,19 @@ class FormsPlugin extends Plugin {
         }
     }
     
-    static function getAddresses($district) {
-        if(!$district) {
-            $query = "SELECT DISTINCT address FROM sincro_cabinet";
-            $result = db_query($query);
+    static function getAddressesByDistrict($district) {
+        $query = "SELECT DISTINCT address FROM sincro_cabinet WHERE district = '$district'";
+        $result = db_query($query);
 
-            if ($result) {
-                $addresses = [];
-                while ($row = db_fetch_array($result)) {
-                    $addresses[] = $row['address'];
-                }
-                return $addresses;
-            } else {
-                // Handle the case where the query fails
-                error_log("Error fetching isactive from ost_plugin table");
-                return false; // Return false if unable to fetch isactive
+        if ($result) {
+            $addresses = [];
+            while ($row = db_fetch_array($result)) {
+                $addresses[] = $row['address'];
             }
+            return $addresses;
         } else {
-            $query = "SELECT DISTINCT address FROM sincro_cabinet WHERE district = '$district'";
-            $result = db_query($query);
-
-            if ($result) {
-                $addresses = [];
-                while ($row = db_fetch_array($result)) {
-                    $addresses[] = $row['address'];
-                }
-                return $addresses;
-            } else {
-                error_log("Error fetching isactive from ost_plugin table");
-                return false; 
-            }
+            error_log("Error fetching isactive from ost_plugin table");
+            return false; 
         }
     }
     
