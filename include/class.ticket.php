@@ -4429,13 +4429,10 @@ implements RestrictedAccess, Threadable, Searchable {
             foreach ($vars['checkbox_name'] as $string) {
                 if (strpos($string, 'Cinemómetro') !== false) {
                     $cinemometerFound = true;
-                    break; // Exit the loop after finding "Cinemometer"
                 } else if (strpos($string, 'Router') !== false) {
                     $routerFound = true;
-                    break; // Exit the loop after finding "Cinemometer"
                 } else if (strpos($string, 'UPS') !== false) {
                     $upsFound = true;
-                    break; // Exit the loop after finding "Cinemometer"
                 }
             }
             
