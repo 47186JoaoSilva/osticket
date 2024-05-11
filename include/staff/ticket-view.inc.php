@@ -608,66 +608,6 @@ if($ticket->isOverdue())
                 <?php
                 }
                 ?>
-                <tr>
-                    <th nowrap>
-                        <?php echo __('Distrito');?>:
-                    </th>
-                    <td>
-                        <?php 
-                            echo Format::htmlchars($ticket->getDistrict());
-                        ?>
-                    </td>
-                </tr> 
-                <tr>
-                    <th nowrap>
-                        <?php echo __('Morada');?>:
-                    </th>
-                    <td>
-                        <?php 
-                            echo Format::htmlchars($ticket->getAddress());
-                        ?>
-                    </td>
-                </tr> 
-                <tr>
-                    <th nowrap>
-                        <?php echo __('Cabine');?>:
-                    </th>
-                    <td>
-                        <?php 
-                            echo Format::htmlchars($ticket->getCabinetInfo());
-                        ?>
-                    </td>
-                </tr> 
-                <tr>
-                    <th nowrap>
-                        <?php echo __('Cinemómetro avariado');?>:
-                    </th>
-                    <td>
-                        <?php 
-                            echo Format::htmlchars($ticket->getCinemometerInfo());
-                        ?>
-                    </td>
-                </tr> 
-                <tr>
-                    <th nowrap>
-                        <?php echo __('Ups avariado');?>:
-                    </th>
-                    <td>
-                        <?php 
-                            echo Format::htmlchars($ticket->getUpsInfo());
-                        ?>
-                    </td>
-                </tr> 
-                <tr>
-                    <th nowrap>
-                        <?php echo __('Router avariado');?>:
-                    </th>
-                    <td>
-                        <?php 
-                            echo Format::htmlchars($ticket->getRouterInfo());
-                        ?>
-                    </td>
-                </tr>
             </table>
         </td>
         <td width="50%">

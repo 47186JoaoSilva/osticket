@@ -9,14 +9,14 @@ require_once(INCLUDE_DIR . 'class.dispatcher.php');
 class FormsPlugin extends Plugin {
     function bootstrap() {
         //Signal quando o plugin é ativado ou desativado
-        //Signal::connect('model.updated', array($this, 'restoreOrReplaceFiles'));
-        //Signal::connect('model.updated', array($this, 'addOrDeleteColumnsFromTable'));
-        //Signal::connect('model.updated', array($this, 'moveOrRemoveFiles'));
+        Signal::connect('model.updated', array($this, 'restoreOrReplaceFiles'));
+        Signal::connect('model.updated', array($this, 'moveOrRemoveFiles'));
+        Signal::connect('model.updated', array($this, 'addOrDeleteColumnsFromTable'));
         
         //Signal quando o plugin é apagado
         Signal::connect('model.deleted', array($this, 'restoreOrReplaceFiles'));
-        Signal::connect('model.deleted', array($this, 'addOrDeleteColumnsFromTable')); 
         Signal::connect('model.deleted', array($this, 'moveOrRemoveFiles'));
+        Signal::connect('model.deleted', array($this, 'addOrDeleteColumnsFromTable')); 
     }
     
     
@@ -29,7 +29,9 @@ class FormsPlugin extends Plugin {
     
     function restoreOrReplaceTicketOpenFile() {
         if($this->isPluginActive()) {
-            $this->replaceTicketOpenFile();
+            if(!$this->doesColumnExist()) {
+                $this->replaceTicketOpenFile();
+            }
         }
         else {
             $this->restoreTicketOpenFile();
@@ -38,7 +40,9 @@ class FormsPlugin extends Plugin {
     
     function restoreOrReplaceTicketViewFile() {
         if($this->isPluginActive()) {
-            $this->replaceTicketViewFile();
+            if(!$this->doesColumnExist()) {
+                $this->replaceTicketViewFile();
+            }
         }
         else {
             $this->restoreTicketViewFile();
@@ -47,7 +51,9 @@ class FormsPlugin extends Plugin {
     
     function restoreOrReplaceClassTicketFile() {
         if($this->isPluginActive()) {
-            $this->replaceClassTicketFile();
+            if(!$this->doesColumnExist()) {
+                $this->replaceClassTicketFile();
+            }
         }
         else {
             $this->restoreClassTicketFile();
@@ -56,7 +62,9 @@ class FormsPlugin extends Plugin {
     
     function restoreOrReplaceOpenFile() {
         if($this->isPluginActive()) {
-            $this->replaceOpenFile();
+            if(!$this->doesColumnExist()) {
+                $this->replaceOpenFile();
+            }
         }
         else {
             $this->restoreOpenFile();
@@ -65,7 +73,9 @@ class FormsPlugin extends Plugin {
     
     function moveOrRemoveFiles() {
         if($this->isPluginActive()) {
-            $this->moveToNewDirectory();
+            if(!$this->doesColumnExist()) {
+                $this->moveToNewDirectory();
+            }
         }
         else {
             $this->moveToOriginalDirectory();
@@ -492,6 +502,25 @@ class FormsPlugin extends Plugin {
             // Handle the case where the query fails
             error_log("Error fetching isactive from ost_plugin table");
             return false; // Return false if unable to fetch isactive
+        }
+    }
+    
+    function doesColumnExist() {
+        // Define your SQL query to check if the column exists in the specified table
+        $query = "SHOW COLUMNS FROM ost_ticket LIKE 'cabinet_id'";
+
+        // Execute the query
+        $result = db_query($query);
+
+        // Check if the query was successful
+        if ($result) {
+            // Check if the column exists
+            $rowCount = db_num_rows($result);
+            return ($rowCount > 0); // Return true if the column exists, false otherwise
+        } else {
+            // Handle the case where the query fails
+            error_log("Error checking column existence in table ost_ticket");
+            return false; // Return false if unable to check column existence
         }
     }
  
