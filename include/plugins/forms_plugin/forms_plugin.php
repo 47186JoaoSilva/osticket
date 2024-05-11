@@ -9,13 +9,16 @@ require_once(INCLUDE_DIR . 'class.dispatcher.php');
 class FormsPlugin extends Plugin {
     function bootstrap() {
         //Signal quando o plugin é ativado ou desativado
-        Signal::connect('model.updated', array($this, 'restoreOrReplaceFiles'));
-        Signal::connect('model.updated', array($this, 'addOrDeleteColumnsFromTable'));
+        //Signal::connect('model.updated', array($this, 'restoreOrReplaceFiles'));
+        //Signal::connect('model.updated', array($this, 'addOrDeleteColumnsFromTable'));
+        //Signal::connect('model.updated', array($this, 'moveOrRemoveFiles'));
         
         //Signal quando o plugin é apagado
         Signal::connect('model.deleted', array($this, 'restoreOrReplaceFiles'));
         Signal::connect('model.deleted', array($this, 'addOrDeleteColumnsFromTable')); 
+        Signal::connect('model.deleted', array($this, 'moveOrRemoveFiles'));
     }
+    
     
     function restoreOrReplaceFiles() {
         $this->restoreOrReplaceTicketOpenFile();
@@ -60,6 +63,15 @@ class FormsPlugin extends Plugin {
         }
     }
     
+    function moveOrRemoveFiles() {
+        if($this->isPluginActive()) {
+            $this->moveToNewDirectory();
+        }
+        else {
+            $this->moveToOriginalDirectory();
+        }
+    }
+    
     function replaceTicketOpenFile() {
         $this->replaceFile(INCLUDE_DIR . 'staff/ticket-open.inc.php', 'ticket-open-modified.inc.php');
     }
@@ -91,6 +103,19 @@ class FormsPlugin extends Plugin {
     function restoreOpenFile() {
         $this->restoreFile(INCLUDE_DIR . 'client/open.inc.php', 'open-backup.inc.php');
     }
+    
+    function moveToNewDirectory() {
+        $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/get_addresses.php', SCP_DIR . 'get_addresses.php');
+        $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/get_cabinets.php', SCP_DIR . 'get_cabinets.php');
+        $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/get_checkbox_values.php', SCP_DIR . 'get_checkbox_values.php');
+    }
+    
+    function moveToOriginalDirectory() {
+        $this->moveFileToDirectory(SCP_DIR . 'get_addresses.php', INCLUDE_DIR . 'plugins/forms_plugin/get_addresses.php');
+        $this->moveFileToDirectory(SCP_DIR . 'get_cabinets.php', INCLUDE_DIR . 'plugins/forms_plugin/get_cabinets.php');
+        $this->moveFileToDirectory(SCP_DIR . 'get_checkbox_values.php', INCLUDE_DIR . 'plugins/forms_plugin/get_checkbox_values.php');
+    }
+    
     
     function replaceFile($file_path, $modified_file_name) {
         $modified_file_path = __DIR__ . '\modified_files' . '/' . $modified_file_name;
@@ -131,14 +156,28 @@ class FormsPlugin extends Plugin {
         }
     }
     
+    function moveFileToDirectory($source, $destination) {
+        // Check if the source file exists
+        if (!file_exists($source)) {
+            return "Source file does not exist.";
+        }
+
+        // Attempt to move the file
+        if (rename($source, $destination)) {
+            return "File moved successfully.";
+        } else {
+            return "Failed to move the file.";
+        }
+    }
+    
     function addOrDeleteColumnsFromTable() {
         if($this->isPluginActive()) {
-            $this->copyBackupIfExists();
+            //$this->copyBackupIfExists();
             $this->addColumnsToTable();
         }
         else {
             //TODO(): Add condition to see if the checkbox is checked or not
-            $this->createBackupTables();
+            //$this->createBackupTables();
             $this->deleteLinesFromTable();
             $this->deleteColumnsFromTable();
         }
