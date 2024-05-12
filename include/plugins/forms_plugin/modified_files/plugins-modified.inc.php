@@ -134,15 +134,39 @@ if ($count) //Show options..
         __('Are you sure you want to <b>disable</b> %s?'),
         _N('selected plugin', 'selected plugins', 2)); ?></font>
     </p>
-    <div><?php echo __('Please confirm to continue.'); ?></div>
+    <div>
+        <?php echo __('Queres fazer backup dos tickets criados durante o tempo de vida do Plugin?'); ?>
+        <input type="checkbox" id="eraseDataCheckbox">
+    </div>
     <hr style="margin-top:1em"/>
     <p class="full-width">
         <span class="buttons pull-left">
             <input type="button" value="<?php echo __('No, Cancel'); ?>" class="close">
         </span>
         <span class="buttons pull-right">
-            <input type="button" value="<?php echo __('Yes, Do it!'); ?>" class="confirm">
+            <input type="button" value="<?php echo __('Yes, Do it!'); ?>" class="confirm" onclick="handleCheckbox()">
         </span>
      </p>
     <div class="clear"></div>
 </div>
+
+<script>
+    function handleCheckbox() {
+        var checkbox = document.getElementById("eraseDataCheckbox");
+        console.log("Checked");
+        if (checkbox.checked) {
+            console.log("Checked");
+            // Make an AJAX request to a PHP script that contains the function you want to call
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    // Optionally, handle the response from the PHP script
+                    console.log(this.responseText);
+                }
+            };
+            console.log("Checked1");
+            xmlhttp.open("GET", "erase_data.php", true);
+            xmlhttp.send();
+        }
+    }
+</script>

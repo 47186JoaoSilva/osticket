@@ -25,6 +25,7 @@ class FormsPlugin extends Plugin {
         $this->restoreOrReplaceTicketViewFile();
         $this->restoreOrReplaceClassTicketFile();
         $this->restoreOrReplaceOpenFile();
+        $this->restoreOrReplacePluginsFile();
     }
     
     function restoreOrReplaceTicketOpenFile() {
@@ -71,6 +72,17 @@ class FormsPlugin extends Plugin {
         }
     }
     
+    function restoreOrReplacePluginsFile() {
+        if($this->isPluginActive()) {
+            if(!$this->doesColumnExist()) {
+                $this->replacePluginFile();
+            }
+        }
+        else {
+            $this->restorePluginFile();
+        }
+    }
+    
     function moveOrRemoveFiles() {
         if($this->isPluginActive()) {
             if(!$this->doesColumnExist()) {
@@ -98,6 +110,10 @@ class FormsPlugin extends Plugin {
         $this->replaceFile(INCLUDE_DIR . 'client/open.inc.php', 'open-modified.inc.php');
     }
     
+    function replacePluginFile() {
+        $this->replaceFile(INCLUDE_DIR . 'staff/plugins.inc.php', 'plugins-modified.inc.php');
+    }
+    
     function restoreTicketOpenFile() {
         $this->restoreFile(INCLUDE_DIR . 'staff/ticket-open.inc.php', 'ticket-open-backup.inc.php');
     }
@@ -112,6 +128,10 @@ class FormsPlugin extends Plugin {
     
     function restoreOpenFile() {
         $this->restoreFile(INCLUDE_DIR . 'client/open.inc.php', 'open-backup.inc.php');
+    }
+    
+    function restorePluginFile() {
+        $this->restoreFile(INCLUDE_DIR . 'staff/plugins.inc.php', 'plugins-backup.inc.php');
     }
     
     function moveToNewDirectory() {
@@ -182,12 +202,11 @@ class FormsPlugin extends Plugin {
     
     function addOrDeleteColumnsFromTable() {
         if($this->isPluginActive()) {
-            //$this->copyBackupIfExists();
             $this->addColumnsToTable();
+            $this->copyBackupIfExists();
+
         }
         else {
-            //TODO(): Add condition to see if the checkbox is checked or not
-            //$this->createBackupTables();
             $this->deleteLinesFromTable();
             $this->deleteColumnsFromTable();
         }
@@ -455,15 +474,33 @@ class FormsPlugin extends Plugin {
     }
     
     function deleteLinesFromTable() { //APAGAR TAMBEM AS LINHAS DA TABELA CDATA ATRAVES DO ticket_id
-        $query = "DELETE FROM ost_ticket WHERE cabinet_id != 0";
+         $ticketIdsQuery = "SELECT ticket_id FROM ost_ticket WHERE cabinet_id != 0";
+        $ticketIdsResult = db_query($ticketIdsQuery);
 
-        $result = db_query($query);
+        if ($ticketIdsResult) {
+            while ($row = db_fetch_array($ticketIdsResult)) {
+                $ticketId = $row['ticket_id'];
+                $deleteCdataQuery = "DELETE FROM ost_ticket__cdata WHERE ticket_id = $ticketId";
+                $deleteCdataResult = db_query($deleteCdataQuery);
 
-        // Execute the query
-        if ($result) {
-            error_log( "Line deleted successfully where textbox_name was not empty.");
+                if (!$deleteCdataResult) {
+                    error_log("Error deleting related data from ost_ticket__cdata for ticket ID $ticketId: " . db_error());
+                }
+            }
+
+            // Step 3: Execute the original deletion query from ost_ticket
+            $deleteTicketsQuery = "DELETE FROM ost_ticket WHERE cabinet_id != 0";
+            $deleteTicketsResult = db_query($deleteTicketsQuery);
+
+            if ($deleteTicketsResult) {
+                error_log("Tickets deleted successfully where cabinet_id was not 0.");
+            } else {
+                error_log("Error deleting tickets where cabinet_id was not 0: " . db_error());
+                // Optionally, handle error or log it
+            }
         } else {
-            error_log("Error deleting column 'textbox_name' from table where textbox_name was not empty: " . db_error());
+            error_log("Error fetching ticket IDs from ost_ticket: " . db_error());
+            // Optionally, handle error or log it
         }
     }  
 
@@ -536,7 +573,6 @@ class FormsPlugin extends Plugin {
             $result1 = db_query($copyTicketQuery);
             if (!$result1) {
                 error_log("Error copying data from ost_ticket_backup to ost_ticket: " . db_error());
-                return;
             }
         }
 
@@ -546,7 +582,6 @@ class FormsPlugin extends Plugin {
             $result2 = db_query($copyCdataQuery);
             if (!$result2) {
                 error_log("Error copying data from ost_ticket__cdata_backup to ost_ticket__cdata: " . db_error());
-                return;
             }
         }
         
@@ -556,7 +591,6 @@ class FormsPlugin extends Plugin {
             $result3 = db_query($deleteTicketBackupQuery);
             if (!$result3) {
                 error_log("Error deleting backup table ost_ticket_backup: " . db_error());
-                return;
             }
         }
 
@@ -565,7 +599,6 @@ class FormsPlugin extends Plugin {
             $result4 = db_query($deleteCdataBackupQuery);
             if (!$result4) {
                 error_log("Error deleting backup table ost_ticket__cdata_backup: " . db_error());
-                return;
             }
         }
         
@@ -578,7 +611,7 @@ class FormsPlugin extends Plugin {
     }
 
     
-    function createBackupTables() { // 
+    static function createBackupTables() { 
         // Check if the tables already exist
         $ticketTableExists = db_query("SHOW TABLES LIKE 'ost_ticket_backup'")->num_rows > 0;
         $cdataTableExists = db_query("SHOW TABLES LIKE 'ost_ticket__cdata_backup'")->num_rows > 0;
@@ -589,7 +622,6 @@ class FormsPlugin extends Plugin {
             $result1 = db_query($createTicketTableQuery);
             if (!$result1) {
                 error_log("Error creating table ost_ticket_backup: " . db_error());
-                return;
             }
 
             // Copy data from ost_ticket to ost_ticket_backup where textbox_name != ''
@@ -597,7 +629,6 @@ class FormsPlugin extends Plugin {
             $result2 = db_query($copyTicketDataQuery);
             if (!$result2) {
                 error_log("Error copying data to table ost_ticket_backup: " . db_error());
-                return;
             }
         }
 
@@ -607,7 +638,6 @@ class FormsPlugin extends Plugin {
             $result3 = db_query($createCdataTableQuery);
             if (!$result3) {
                 error_log("Error creating table ost_ticket__cdata_backup: " . db_error());
-                return;
             }
 
             // Copy data from ost_ticket__cdata to ost_ticket__cdata_backup where ticket_id matches
@@ -615,7 +645,6 @@ class FormsPlugin extends Plugin {
             $result4 = db_query($copyCdataQuery);
             if (!$result4) {
                 error_log("Error copying data to table ost_ticket__cdata_backup: " . db_error());
-                return;
             }
         }
 
