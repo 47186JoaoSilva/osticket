@@ -787,4 +787,9 @@ function updateEquipments() {
         xmlhttp.send();
     } 
 }
+
+window.onload = function() {
+    var districtOption = document.getElementById("district_option");
+    districtOption.value = "";
+};
 </script>

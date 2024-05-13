@@ -138,12 +138,14 @@ class FormsPlugin extends Plugin {
         $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/get_addresses.php', SCP_DIR . 'get_addresses.php');
         $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/get_cabinets.php', SCP_DIR . 'get_cabinets.php');
         $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/get_checkbox_values.php', SCP_DIR . 'get_checkbox_values.php');
+        $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/erase_data.php', SCP_DIR . 'erase_data.php');
     }
     
     function moveToOriginalDirectory() {
         $this->moveFileToDirectory(SCP_DIR . 'get_addresses.php', INCLUDE_DIR . 'plugins/forms_plugin/get_addresses.php');
         $this->moveFileToDirectory(SCP_DIR . 'get_cabinets.php', INCLUDE_DIR . 'plugins/forms_plugin/get_cabinets.php');
         $this->moveFileToDirectory(SCP_DIR . 'get_checkbox_values.php', INCLUDE_DIR . 'plugins/forms_plugin/get_checkbox_values.php');
+        $this->moveFileToDirectory(SCP_DIR . 'erase_data.php', INCLUDE_DIR . 'plugins/forms_plugin/erase_data.php');
     }
     
     
@@ -460,6 +462,7 @@ class FormsPlugin extends Plugin {
             'cinemometer_id' => "INT DEFAULT NULL", 
             'ups_id' => "INT DEFAULT NULL", 
             'router_id' => "INT DEFAULT NULL", 
+            'other_value' => "VARCHAR(64) DEFAULT NULL"
         );
 
         foreach ($columns as $column => $definition) {
@@ -474,7 +477,7 @@ class FormsPlugin extends Plugin {
     }
     
     function deleteLinesFromTable() { //APAGAR TAMBEM AS LINHAS DA TABELA CDATA ATRAVES DO ticket_id
-         $ticketIdsQuery = "SELECT ticket_id FROM ost_ticket WHERE cabinet_id != 0";
+        $ticketIdsQuery = "SELECT ticket_id FROM ost_ticket WHERE cabinet_id != 0";
         $ticketIdsResult = db_query($ticketIdsQuery);
 
         if ($ticketIdsResult) {
@@ -509,7 +512,8 @@ class FormsPlugin extends Plugin {
             'cabinet_id',
             'cinemometer_id',
             'ups_id',
-            'router_id'
+            'router_id',
+            'other_value'
         );
 
         foreach ($columns as $column) {
@@ -612,44 +616,22 @@ class FormsPlugin extends Plugin {
 
     
     static function createBackupTables() { 
-        // Check if the tables already exist
-        $ticketTableExists = db_query("SHOW TABLES LIKE 'ost_ticket_backup'")->num_rows > 0;
-        $cdataTableExists = db_query("SHOW TABLES LIKE 'ost_ticket__cdata_backup'")->num_rows > 0;
-
-        if (!$ticketTableExists) {
-            // Create ost_ticket_backup table
-            $createTicketTableQuery = "CREATE TABLE ost_ticket_backup LIKE ost_ticket";
-            $result1 = db_query($createTicketTableQuery);
-            if (!$result1) {
-                error_log("Error creating table ost_ticket_backup: " . db_error());
-            }
-
-            // Copy data from ost_ticket to ost_ticket_backup where textbox_name != ''
-            $copyTicketDataQuery = "INSERT INTO ost_ticket_backup SELECT * FROM ost_ticket WHERE ticket_id IN (SELECT ticket_id FROM ost_ticket WHERE cabinet_id != 0)";
-            $result2 = db_query($copyTicketDataQuery);
-            if (!$result2) {
-                error_log("Error copying data to table ost_ticket_backup: " . db_error());
-            }
+        // Create ost_ticket_backup table and copy data
+        $createTicketTableQuery = "CREATE TABLE IF NOT EXISTS ost_ticket_backup SELECT * FROM ost_ticket WHERE cabinet_id != 0";
+        $result1 = db_query($createTicketTableQuery);
+        if (!$result1) {
+            error_log("Error creating table ost_ticket_backup: " . db_error());
         }
 
-        if (!$cdataTableExists) {
-            // Create ost_ticket__cdata_backup table
-            $createCdataTableQuery = "CREATE TABLE ost_ticket__cdata_backup LIKE ost_ticket__cdata";
-            $result3 = db_query($createCdataTableQuery);
-            if (!$result3) {
-                error_log("Error creating table ost_ticket__cdata_backup: " . db_error());
-            }
-
-            // Copy data from ost_ticket__cdata to ost_ticket__cdata_backup where ticket_id matches
-            $copyCdataQuery = "INSERT INTO ost_ticket__cdata_backup SELECT * FROM ost_ticket__cdata WHERE ticket_id IN (SELECT ticket_id FROM ost_ticket WHERE cabinet_id != 0)";
-            $result4 = db_query($copyCdataQuery);
-            if (!$result4) {
-                error_log("Error copying data to table ost_ticket__cdata_backup: " . db_error());
-            }
+        // Create ost_ticket__cdata_backup table and copy data
+        $createCdataTableQuery = "CREATE TABLE IF NOT EXISTS ost_ticket__cdata_backup SELECT * FROM ost_ticket__cdata WHERE ticket_id IN (SELECT ticket_id FROM ost_ticket WHERE cabinet_id != 0)";
+        $result2 = db_query($createCdataTableQuery);
+        if (!$result2) {
+            error_log("Error creating table ost_ticket__cdata_backup: " . db_error());
         }
 
         // Log success
-        if (!$ticketTableExists && !$cdataTableExists) {
+        if ($result1 && $result2) {
             error_log("Tables ost_ticket_backup and ost_ticket__cdata_backup created and data copied successfully.");
         } else {
             error_log("Tables ost_ticket_backup and ost_ticket__cdata_backup already exist.");

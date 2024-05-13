@@ -288,6 +288,10 @@ implements RestrictedAccess, Threadable, Searchable {
         return $this->router_id;
     }
     
+    function getOtherValue(){
+        return $this->other_value;
+    }
+    
     function getDistrict() {
         return FormsPlugin::getDistrict($this->getCabinetId());
     }
@@ -4426,6 +4430,7 @@ implements RestrictedAccess, Threadable, Searchable {
             $cinemometerFound = false;
             $upsFound = false;
             $routerFound = false;
+            $otherFound = false;
             foreach ($vars['checkbox_name'] as $string) {
                 if (strpos($string, 'Cinemómetro') !== false) {
                     $cinemometerFound = true;
@@ -4433,6 +4438,8 @@ implements RestrictedAccess, Threadable, Searchable {
                     $routerFound = true;
                 } else if (strpos($string, 'UPS') !== false) {
                     $upsFound = true;
+                } else if (strpos($string, 'Outro') !== false) {
+                    $otherFound = true;
                 }
             }
             
@@ -4445,6 +4452,9 @@ implements RestrictedAccess, Threadable, Searchable {
             }
             if($routerFound) {
                 $ticket->router_id = FormsPlugin::getRouterId($ticket->cabinet_id);
+            }
+            if($otherFound) {
+                $ticket->other_value = 'Outro';
             }
         }
         
