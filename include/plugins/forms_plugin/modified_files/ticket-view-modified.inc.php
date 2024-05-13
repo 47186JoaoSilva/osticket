@@ -563,20 +563,18 @@ if($ticket->isOverdue())
                 <?php
                 } ?>
                 <tr>
-                    <th><?php echo __('Distrito');?>:</th>
+                    <th><?php echo __('SLA Plan');?>:</th>
                     <td>
-                        <?php if ($role->hasPerm(Ticket::PERM_EDIT)) { ?>
-                            <select id="district_edit_select">
-                                <option value="" selected><?php echo __('-Select District-');?></option>
-                                <option value="District A">District A</option>
-                                <option value="District B">District B</option>
-                                <option value="District C">District C</option>
-                                <!-- Add more options as needed -->
-                            </select>
-                            <a href="#" class="inline-edit" onclick="editDistrict()">Edit</a>
-                        <?php } else { ?>
-                            <span><?php echo Format::htmlchars($ticket->getDistrict()) ?: __('None'); ?></span>
-                        <?php } ?>
+                    <?php
+                         if ($role->hasPerm(Ticket::PERM_EDIT)) {
+                             $slaField = $ticket->getField('sla'); ?>
+                          <a class="inline-edit" data-placement="bottom" data-toggle="tooltip" title="<?php echo __('Update'); ?>"
+                          href="#tickets/<?php echo $ticket->getId(); ?>/field/sla/edit">
+                          <span id="field_sla"><?php echo $sla ?: __('None'); ?></span>
+                      </a>
+                      <?php } else { ?>
+                        <span id="field_sla"><?php echo $sla ?: __('None'); ?></span>
+                      <?php } ?>
                     </td>
                 </tr>
                 <?php
@@ -611,16 +609,13 @@ if($ticket->isOverdue())
                 }
                 ?>
                 <tr>
-                    <th><?php echo __('Distrito');?>:</th>
+                    <th nowrap>
+                        <?php echo __('Distrito');?>:
+                    </th>
                     <td>
-                        <?php if ($role->hasPerm(Ticket::PERM_EDIT)) { ?>
-                            <a class="inline-edit" data-placement="bottom" data-toggle="tooltip" title="<?php echo __('Update'); ?>"
-                               href="#tickets/<?php echo $ticket->getId(); ?>/field/district/edit">
-                                <span id="field_district"><?php echo Format::htmlchars($ticket->getDistrict()) ?: __('None'); ?></span>
-                            </a>
-                        <?php } else { ?>
-                            <span id="field_district"><?php echo Format::htmlchars($ticket->getDistrict()) ?: __('None'); ?></span>
-                        <?php } ?>
+                        <?php 
+                            echo Format::htmlchars($ticket->getDistrict());
+                        ?>
                     </td>
                 </tr> 
                 <tr>
