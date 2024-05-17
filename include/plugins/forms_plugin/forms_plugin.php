@@ -35,7 +35,9 @@ class FormsPlugin extends Plugin {
             }
         }
         else {
-            $this->restoreTicketOpenFile();
+            if($this->doesColumnExist()) {
+                $this->restoreTicketOpenFile();
+            }
         }
     }
     
@@ -46,7 +48,9 @@ class FormsPlugin extends Plugin {
             }
         }
         else {
-            $this->restoreTicketViewFile();
+            if($this->doesColumnExist()) {
+                $this->restoreTicketViewFile();
+            }
         }
     }
     
@@ -57,7 +61,9 @@ class FormsPlugin extends Plugin {
             }
         }
         else {
-            $this->restoreClassTicketFile();
+            if($this->doesColumnExist()) {
+                $this->restoreClassTicketFile();
+            }
         }
     }
     
@@ -68,7 +74,9 @@ class FormsPlugin extends Plugin {
             }
         }
         else {
-            $this->restoreOpenFile();
+            if($this->doesColumnExist()) {
+                $this->restoreOpenFile();
+            }
         }
     }
     
@@ -79,7 +87,9 @@ class FormsPlugin extends Plugin {
             }
         }
         else {
-            $this->restorePluginFile();
+            if($this->doesColumnExist()) {
+                $this->restorePluginFile();
+            }
         }
     }
     
@@ -90,7 +100,9 @@ class FormsPlugin extends Plugin {
             }
         }
         else {
-            $this->moveToOriginalDirectory();
+            if($this->doesColumnExist()) {
+                $this->moveToOriginalDirectory();
+            }
         }
     }
     
@@ -204,13 +216,16 @@ class FormsPlugin extends Plugin {
     
     function addOrDeleteColumnsFromTable() {
         if($this->isPluginActive()) {
-            $this->addColumnsToTable();
-            $this->copyBackupIfExists();
-
+            if(!$this->doesColumnExist()) {
+                $this->addColumnsToTable();
+                $this->copyBackupIfExists();
+            }
         }
         else {
-            $this->deleteLinesFromTable();
-            $this->deleteColumnsFromTable();
+            if($this->doesColumnExist()) {
+                $this->deleteLinesFromTable();
+                $this->deleteColumnsFromTable();
+            }
         }
     }
     
