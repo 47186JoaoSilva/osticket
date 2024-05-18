@@ -111,25 +111,25 @@ if ($info['topicId'] && ($topic=Topic::lookup($info['topicId']))) {
             </td>
         </tr>
         <tr>
-            <td width="160" class="required"><?php echo __('Morada');?>:</td>
+            <td width="160" class="required"><?php echo __('Via');?>:</td>
         </tr> 
         <tr>
             <td colspan="2">
                 <select name="address_option" id="address_option" onchange="updateCabinOptions();">
-                    <option value="" selected><?php echo __('-Select Address-');?></option>
+                    <option value="" selected><?php echo __('-Select Way-');?></option>
                 </select>
                 &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['address_option']; ?></font>
             </td>
         </tr>
         <tr>
-            <td width="160" class="required"><?php echo __('Cabine');?>:</td>
+            <td width="160" class="required"><?php echo __('Local');?>:</td>
         </tr> 
         <tr>
             <td colspan="2">
-                <select name="cabinet_option" id="cabinet_option" onchange="updateEquipments();">
-                    <option value="" selected><?php echo __('-Select Cabinet-');?></option>
+                <select name="place_option" id="place_option" onchange="updateEquipments();">
+                    <option value="" selected><?php echo __('-Select Place-');?></option>
                 </select>
-                &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['cabinet_option']; ?></font>
+                &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['place_option']; ?></font>
             </td>
         </tr>
         <tr>
@@ -223,64 +223,59 @@ function updateAddressOptions() {
     xmlhttp.open("GET", url, true);
     xmlhttp.send();
 }
-// Define the updateCabinOptions function to fetch and populate cabinet options based on the selected district and address
+
 function updateCabinOptions() {
     var selectedAddress = document.getElementById("address_option").value;
-    var cabinetCombobox = document.getElementById("cabinet_option");
+    var placeCombobox = document.getElementById("place_option");
     
     // Clear existing options
-    cabinetCombobox.innerHTML = "";
+    placeCombobox.innerHTML = "";
 
     // Check if either district or address has a non-default value
     if (selectedAddress !== "") {
-        // Fetch cabinets only if either district or address is selected
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
-                var cabinets = JSON.parse(this.responseText);
+                var places = JSON.parse(this.responseText);
 
-                // Populate options for the cabinet combobox
                 var defaultOption = document.createElement("option");
                 defaultOption.value = ""; // Set default value
-                defaultOption.text = "-Select Cabinet-"; // Set default text
-                cabinetCombobox.add(defaultOption);
+                defaultOption.text = "-Select Place-"; // Set default text
+                placeCombobox.add(defaultOption);
 
-                cabinets.forEach(function(cabinet) {
+                places.forEach(function(place) {
                     var option = document.createElement("option");
-                    option.value = cabinet;
-                    option.text = cabinet;
-                    cabinetCombobox.add(option);
+                    option.value = place;
+                    option.text = place;
+                    placeCombobox.add(option);
                 });
             }
         };
 
-        // Fetch cabinets based on the selected district and address
         var url = "scp/get_cabinets.php?address=" + encodeURIComponent(selectedAddress);
         xmlhttp.open("GET", url, true);
         xmlhttp.send();
     } else {
-        // If both district and address are default, reset cabinet combobox to default state
         var defaultOption = document.createElement("option");
         defaultOption.value = "";
-        defaultOption.text = "-Select Cabinet-";
-        cabinetCombobox.add(defaultOption);
+        defaultOption.text = "-Select place-";
+        placeCombobox.add(defaultOption);
     }
 }
 
 function updateEquipments() {
-    var selectedCabinet = document.getElementById("cabinet_option").value;
+    var selectedPlace = document.getElementById("place_option").value;
     var checkboxContainer = document.getElementById("checkbox_container");
     checkboxContainer.innerHTML = "";
     
-    // If a cabinet is selected, fetch checkbox values from the server
-    if (selectedCabinet !== "") {
+    if (selectedPlace !== "") {
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
                 var checkboxValues = JSON.parse(this.responseText);
-                var equipments = ['Cinemómetro','Router','UPS'];
+                var equipments = ['Cabine','Cinemómetro','Router','UPS'];
                 if(checkboxValues.length != equipments.length) {
-                    equipments = ['Router','UPS'];
+                    equipments = ['Cabine','Router','UPS'];
                 }
                 
                 // Create checkboxes based on fetched values
@@ -321,7 +316,7 @@ function updateEquipments() {
         };
 
         // Fetch checkbox values from the server based on the selected cabinet
-        var url = "scp/get_checkbox_values.php?cabinet=" + encodeURIComponent(selectedCabinet);
+        var url = "scp/get_checkbox_values.php?place=" + encodeURIComponent(selectedPlace);
         xmlhttp.open("GET", url, true);
         xmlhttp.send();
     } 

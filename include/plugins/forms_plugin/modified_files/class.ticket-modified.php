@@ -288,10 +288,6 @@ implements RestrictedAccess, Threadable, Searchable {
         return $this->router_id;
     }
     
-    function getOtherValue(){
-        return $this->other_value;
-    }
-    
     function getDistrict() {
         return FormsPlugin::getDistrict($this->getCabinetId());
     }
@@ -304,16 +300,36 @@ implements RestrictedAccess, Threadable, Searchable {
         return FormsPlugin::getCabinInfo($this->getCabinetId());
     }
 
+    function isCabinBroken() {
+        return $this->cabinet_is_broken;
+    }    
+    
     function getCinemometerInfo() {
         return FormsPlugin::getCinemometerInfo($this->getCinemoterId());
+    }
+    
+    function isCinemometerBroken() {
+        return $this->cinemometer_is_broken;
     }
     
     function getUpsInfo() {
         return FormsPlugin::getUpsInfo($this->getUpsId());
     }
     
+    function isUpsBroken() {
+        return $this->ups_is_broken;
+    }
+    
     function getRouterInfo() {
         return FormsPlugin::getRouterInfo($this->getRouterId());
+    }
+    
+    function isRouterBroken() {
+        return $this->router_is_broken;
+    }
+    
+    function isOtherBroken() {
+        return $this->other_is_broken;
     }
     
     function isMerged() {
@@ -1158,6 +1174,51 @@ implements RestrictedAccess, Threadable, Searchable {
 
         // Special fields
         switch ($fid) {
+        case 'brokenCabin':
+            return ChoiceField::init(array(
+                        'id' => $fid,
+                        'name' => 'cabinet_is_broken',
+                        'label' => __('Cabin'),
+                        'default' => $this->isCabinBroken(),
+                        'choices' => array("Não"=>"Não","Sim"=>"Sim")
+                        ));
+            break;
+        case 'brokenCinemometer':
+            return ChoiceField::init(array(
+                        'id' => $fid,
+                        'name' => 'cinemometer_is_broken',
+                        'label' => __('Cinemometer'),
+                        'default' => $this->isCinemometerBroken(),
+                        'choices' => array("Não"=>"Não","Sim"=>"Sim")
+                        ));
+            break;
+        case 'brokenRouter':
+            return ChoiceField::init(array(
+                        'id' => $fid,
+                        'name' => 'router_is_broken',
+                        'label' => __('Router'),
+                        'default' => $this->isRouterBroken(),
+                        'choices' => array("Não"=>"Não","Sim"=>"Sim")
+                        ));
+            break;
+        case 'brokenUps':
+            return ChoiceField::init(array(
+                        'id' => $fid,
+                        'name' => 'ups_is_broken',
+                        'label' => __('UPS'),
+                        'default' => $this->isUpsBroken(),
+                        'choices' => array("Não"=>"Não","Sim"=>"Sim")
+                        ));
+            break;
+        case 'brokenOther':
+            return ChoiceField::init(array(
+                        'id' => $fid,
+                        'name' => 'other_is_broken',
+                        'label' => __('Other'),
+                        'default' => $this->isOtherBroken(),
+                        'choices' => array("Não"=>"Não","Sim"=>"Sim")
+                        ));
+            break;
         case 'priority':
             return $this->getPriorityField();
             break;
@@ -4160,7 +4221,7 @@ implements RestrictedAccess, Threadable, Searchable {
                 $fields['duedate']  = array('type'=>'date', 'required'=>0, 'error'=>__('Invalid date format - must be MM/DD/YY'));
                 $fields['district_option']  = array('type'=>'string',  'required'=>1, 'error'=>__('District selection is required'));
                 $fields['address_option']  = array('type'=>'string',  'required'=>1, 'error'=>__('Address selection is required'));
-                $fields['cabinet_option']  = array('type'=>'string',  'required'=>1, 'error'=>__('Cabinet selection is required'));
+                $fields['place_option']  = array('type'=>'string',  'required'=>1, 'error'=>__('Place selection is required'));
                 
             case 'api':
                 $fields['source']   = array('type'=>'string', 'required'=>1, 'error'=>__('Indicate ticket source'));
@@ -4423,39 +4484,30 @@ implements RestrictedAccess, Threadable, Searchable {
             $ticket->duedate = date('Y-m-d G:i',
                 Misc::dbtime($vars['duedate']));
 
-        if (isset($vars['cabinet_option'])) {
-            preg_match('/Nº Série: ([^ ]+)/', $vars['cabinet_option'], $matches);
-            $serialNumber = $matches[1];
+        if (isset($vars['place_option'])) {
+            preg_match('/km\s+([\d.]+)/', $vars['place_option'], $matches);
+            $pk = "km " . $matches[1];
+            preg_match('/\b([A-Za-z])\b/', $vars['place_option'], $matches);
+            $c_d = $matches[1];
             
-            $cinemometerFound = false;
-            $upsFound = false;
-            $routerFound = false;
-            $otherFound = false;
             foreach ($vars['checkbox_name'] as $string) {
-                if (strpos($string, 'Cinemómetro') !== false) {
-                    $cinemometerFound = true;
+                if (strpos($string, 'Cabine') !== false) {
+                    $ticket->cabinet_is_broken = 'Sim';
+                } else if (strpos($string, 'Cinemómetro') !== false) {
+                    $ticket->cinemometer_is_broken = 'Sim';
                 } else if (strpos($string, 'Router') !== false) {
-                    $routerFound = true;
+                    $ticket->router_is_broken = 'Sim';
                 } else if (strpos($string, 'UPS') !== false) {
-                    $upsFound = true;
+                    $ticket->ups_is_broken = 'Sim';
                 } else if (strpos($string, 'Outro') !== false) {
-                    $otherFound = true;
+                    $ticket->other_is_broken = 'Sim';
                 }
             }
             
-            $ticket->cabinet_id = FormsPlugin::getCabinetId($serialNumber);
-            if($cinemometerFound) {
-                $ticket->cinemometer_id = FormsPlugin::getCinemometerId($ticket->cabinet_id);
-            }
-            if($upsFound) {
-                $ticket->ups_id = FormsPlugin::getUpsId($ticket->cabinet_id);
-            }
-            if($routerFound) {
-                $ticket->router_id = FormsPlugin::getRouterId($ticket->cabinet_id);
-            }
-            if($otherFound) {
-                $ticket->other_value = 'Outro';
-            }
+            $ticket->cabinet_id = FormsPlugin::getCabinetId($pk, $c_d);
+            $ticket->cinemometer_id = FormsPlugin::getCinemometerId($ticket->cabinet_id);
+            $ticket->ups_id = FormsPlugin::getUpsId($ticket->cabinet_id);
+            $ticket->router_id = FormsPlugin::getRouterId($ticket->cabinet_id);
         }
         
         if (!$ticket->save())

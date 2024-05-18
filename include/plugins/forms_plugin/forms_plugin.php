@@ -279,17 +279,17 @@ class FormsPlugin extends Plugin {
         }
     }
     
-    static function getCabinets($address, $district) {
+    static function getPlaces($address) {
         if($address){
-            $query = "SELECT model, serial_number FROM sincro_cabinet WHERE address = '$address'";
+            $query = "SELECT pk, c_d FROM sincro_cabinet WHERE address = '$address'";
             $result = db_query($query);
 
             if ($result) {
-                $cabinets = [];
+                $places = [];
                 while ($row = db_fetch_array($result)) {
-                    $cabinets[] = "Model: " . $row['model'] . " Nº Série: " . $row['serial_number'];
+                    $places[] = $row['pk'] . " " . $row['c_d'];
                 }
-                return $cabinets;
+                return $places;
             } else {
                 error_log("Error fetching isactive from ost_plugin table");
                 return false; 
@@ -297,18 +297,21 @@ class FormsPlugin extends Plugin {
         } 
     }
     
-    static function getEquipments($serialNumber) {
+    static function getEquipments($pk,$c_d) {
         $cabinId = "";
         $cinemometerId = "";
         $routerId = "";
         $upsId = "";
+        $result = [];
         
         //PODE SE TROCAR PELO CODIGO DAS FUNÇOES ABAIXO
-        $cabinIdQuery = "SELECT id FROM SINCRO_Cabinet WHERE serial_number = '$serialNumber'";
+        $cabinIdQuery = "SELECT id, model, suplier FROM SINCRO_Cabinet WHERE pk = '$pk' AND c_d = '$c_d'";
         $cabinIdresult = db_query($cabinIdQuery);
         if ($cabinIdresult) {
-            $row = db_fetch_array($cabinIdresult);
-            $cabinId = $row['id']; 
+            while ($row = db_fetch_array($cabinIdresult)) {
+                $result[] = $row['suplier'] . " " . $row['model'];
+                $cabinId = $row['id'];
+            }  
         }
         
         $cinemometerIdQuery = "SELECT idCinemometer FROM SINCRO_Cabinet_has_Cinemometer WHERE idCabin = '$cabinId'";
@@ -332,13 +335,11 @@ class FormsPlugin extends Plugin {
             $upsId = $row['id_ups']; 
         }
         
-        $result = [];
-        
-        $cinemometerInfoQuery = "SELECT model, suplier, serial_number FROM SINCRO_Cinemometer WHERE id = '$cinemometerId'";
+        $cinemometerInfoQuery = "SELECT model, suplier FROM SINCRO_Cinemometer WHERE id = '$cinemometerId'";
         $cinemometerInfoResult = db_query($cinemometerInfoQuery);
         if ($cinemometerInfoResult) {
             while ($row = db_fetch_array($cinemometerInfoResult)) {
-                    $result[] = "Fornecedor: " . $row['suplier'] . " Model: " . $row['model'];
+                    $result[] = $row['suplier'] . " " . $row['model'];
             }
         }
         
@@ -346,7 +347,7 @@ class FormsPlugin extends Plugin {
         $routerInfoResult = db_query($routerInfoQuery);
         if ($routerInfoResult) {
             while ($row = db_fetch_array($routerInfoResult)) {
-                    $result[] = "Fornecedor: " . $row['suplier'] . " Model: " . $row['model'];
+                    $result[] = $row['suplier'] . " " . $row['model'];
             }
         }
         
@@ -354,15 +355,15 @@ class FormsPlugin extends Plugin {
         $upsInfoResult = db_query($upsInfoQuery);
         if ($upsInfoResult) {
             while ($row = db_fetch_array($upsInfoResult)) {
-                    $result[] = "Fornecedor: " . $row['suplier'] . " Model: " . $row['model'];
+                    $result[] = $row['suplier'] . " " . $row['model'];
             }
         }
         
         return $result;
     }
     
-    static function getCabinetId($serialNumber) {
-        $cabinIdQuery = "SELECT id FROM SINCRO_Cabinet WHERE serial_number = '$serialNumber'";
+    static function getCabinetId($pk,$c_d) {
+        $cabinIdQuery = "SELECT id FROM SINCRO_Cabinet WHERE pk = '$pk' AND c_d = '$c_d'";
         $cabinIdresult = db_query($cabinIdQuery);
         if ($cabinIdresult) {
             $row = db_fetch_array($cabinIdresult);
@@ -418,7 +419,7 @@ class FormsPlugin extends Plugin {
         $cabinInfoResult = db_query($cabinInfoQuery);
         if ($cabinInfoResult) {
             while ($row = db_fetch_array($cabinInfoResult)) {
-                    return "Fornecedor: " . $row['suplier'] . " Model: " . $row['model'];
+                    return $row['suplier'] . " " . $row['model'];
             }
         }
     }
@@ -428,7 +429,7 @@ class FormsPlugin extends Plugin {
         $cinemometerInfoResult = db_query($cinemometerInfoQuery);
         if ($cinemometerInfoResult) {
             while ($row = db_fetch_array($cinemometerInfoResult)) {
-                    return "Fornecedor: " . $row['suplier'] . " Model: " . $row['model'];
+                    return $row['suplier'] . " " . $row['model'];
             }
         }
     }
@@ -438,7 +439,7 @@ class FormsPlugin extends Plugin {
         $routerInfoResult = db_query($routerInfoQuery);
         if ($routerInfoResult) {
             while ($row = db_fetch_array($routerInfoResult)) {
-                    return "Fornecedor: " . $row['suplier'] . " Model: " . $row['model'];
+                    return $row['suplier'] . " " . $row['model'];
             }
         }
     }
@@ -448,7 +449,7 @@ class FormsPlugin extends Plugin {
         $upsInfoResult = db_query($upsInfoQuery);
         if ($upsInfoResult) {
             while ($row = db_fetch_array($upsInfoResult)) {
-                    return "Fornecedor: " . $row['suplier'] . " Model: " . $row['model'];
+                    return $row['suplier'] . " " . $row['model'];
             }
         }
     }
@@ -470,14 +471,18 @@ class FormsPlugin extends Plugin {
             return $row['address']; 
         }
     }
-    
+
     function addColumnsToTable() {
         $columns = array(
-            'cabinet_id' => "INT NOT NULL",
+            'cabinet_id' => "INT DEFAULT NULL",
             'cinemometer_id' => "INT DEFAULT NULL", 
             'ups_id' => "INT DEFAULT NULL", 
             'router_id' => "INT DEFAULT NULL", 
-            'other_value' => "VARCHAR(64) DEFAULT NULL"
+            'cabinet_is_broken' => "TEXT DEFAULT 'Não'",
+            'cinemometer_is_broken' => "TEXT DEFAULT 'Não'",
+            'ups_is_broken' => "TEXT DEFAULT 'Não'",
+            'router_is_broken' => "TEXT DEFAULT 'Não'",
+            'other_is_broken' => "TEXT DEFAULT 'Não'",
         );
 
         foreach ($columns as $column => $definition) {
@@ -528,7 +533,11 @@ class FormsPlugin extends Plugin {
             'cinemometer_id',
             'ups_id',
             'router_id',
-            'other_value'
+            'cabinet_is_broken',
+            'cinemometer_is_broken',
+            'ups_is_broken',
+            'router_is_broken',
+            'other_is_broken',
         );
 
         foreach ($columns as $column) {

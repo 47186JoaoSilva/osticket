@@ -630,51 +630,101 @@ if($ticket->isOverdue())
                 </tr> 
                 <tr>
                     <th nowrap>
-                        <?php echo __('Cabine');?>:
+                        <?php echo __('Cabine ' . $ticket->getCabinetInfo() . ' avariada');?>:
                     </th>
                     <td>
+                        <?php
+                        if ($role->hasPerm(Ticket::PERM_EDIT)) {
+                            $brokenField = $ticket->getField('brokenCabin'); 
+                        ?>
+                        <a class="inline-edit" data-placement="bottom" data-toggle="tooltip" title="<?php echo __('Update'); ?>"
+                        href="#tickets/<?php echo $ticket->getId(); ?>/field/brokenCabin/edit">
+                        <span id="field_brokenCabin"><?php echo $brokenField?></span>
+                        </a>
                         <?php 
-                            echo Format::htmlchars($ticket->getCabinetInfo());
+                        } else { 
+                            echo Format::htmlchars($ticket->isCabinBroken());
+                        }
                         ?>
                     </td>
                 </tr> 
                 <tr>
                     <th nowrap>
-                        <?php echo __('Cinemómetro avariado');?>:
+                        <?php echo __('Cinemómetro ' . $ticket->getCinemometerInfo() . ' avariado');?>:
                     </th>
                     <td>
+                        <?php
+                        if ($role->hasPerm(Ticket::PERM_EDIT)) {
+                            $brokenField = $ticket->getField('brokenCinemometer'); 
+                        ?>
+                        <a class="inline-edit" data-placement="bottom" data-toggle="tooltip" title="<?php echo __('Update'); ?>"
+                        href="#tickets/<?php echo $ticket->getId(); ?>/field/brokenCinemometer/edit">
+                        <span id="field_brokenCinemometer"><?php echo $brokenField?></span>
+                        </a>
                         <?php 
-                            echo Format::htmlchars($ticket->getCinemometerInfo());
+                        } else {
+                            echo Format::htmlchars($ticket->isCinemometerBroken());
+                        }
                         ?>
                     </td>
                 </tr> 
                 <tr>
                     <th nowrap>
-                        <?php echo __('Ups avariado');?>:
+                        <?php echo __('Ups ' . $ticket->getUpsInfo() . ' avariado');?>:
                     </th>
                     <td>
+                        <?php
+                        if ($role->hasPerm(Ticket::PERM_EDIT)) {
+                            $brokenField = $ticket->getField('brokenUps'); 
+                        ?>
+                        <a class="inline-edit" data-placement="bottom" data-toggle="tooltip" title="<?php echo __('Update'); ?>"
+                        href="#tickets/<?php echo $ticket->getId(); ?>/field/brokenUps/edit">
+                        <span id="field_brokenUps"><?php echo $brokenField?></span>
+                        </a>
                         <?php 
-                            echo Format::htmlchars($ticket->getUpsInfo());
+                        } else { 
+                            echo Format::htmlchars($ticket->isUpsBroken());
+                        }
                         ?>
                     </td>
                 </tr> 
                 <tr>
                     <th nowrap>
-                        <?php echo __('Router avariado');?>:
+                        <?php echo __('Router ' . $ticket->getRouterInfo() . ' avariado');?>:
                     </th>
                     <td>
+                        <?php
+                        if ($role->hasPerm(Ticket::PERM_EDIT)) {
+                            $brokenField = $ticket->getField('brokenRouter'); 
+                        ?>
+                        <a class="inline-edit" data-placement="bottom" data-toggle="tooltip" title="<?php echo __('Update'); ?>"
+                        href="#tickets/<?php echo $ticket->getId(); ?>/field/brokenRouter/edit">
+                        <span id="field_brokenRouter"><?php echo $brokenField?></span>
+                        </a>
                         <?php 
-                            echo Format::htmlchars($ticket->getRouterInfo());
+                        } else { 
+                            echo Format::htmlchars($ticket->isRouterBroken());
+                        }
                         ?>
                     </td>
                 </tr>
                 <tr>
                     <th nowrap>
-                        <?php echo __('Outro equipamento avarariado');?>:
+                        <?php echo __('Outro avariado');?>:
                     </th>
                     <td>
+                        <?php
+                        if ($role->hasPerm(Ticket::PERM_EDIT)) {
+                            $brokenField = $ticket->getField('brokenOther'); 
+                        ?>
+                        <a class="inline-edit" data-placement="bottom" data-toggle="tooltip" title="<?php echo __('Update'); ?>"
+                        href="#tickets/<?php echo $ticket->getId(); ?>/field/brokenOther/edit">
+                        <span id="field_brokenOther"><?php echo $brokenField?></span>
+                        </a>
                         <?php 
-                            echo Format::htmlchars($ticket->getOtherValue());
+                        } else { 
+                            echo Format::htmlchars($ticket->isOtherBroken());
+                        }
                         ?>
                     </td>
                 </tr>

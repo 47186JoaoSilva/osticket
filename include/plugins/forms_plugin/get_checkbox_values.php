@@ -1,32 +1,31 @@
 <?php
 require('staff.inc.php');
-if (isset($_GET['cabinet'])) {
-    $cabinet = $_GET['cabinet'];
-    $serialNumber = extractSerialNumber($cabinet);
-    $checkboxValues = FormsPlugin::getEquipments($serialNumber);
-    //$checkboxValues = array('x','y');
-    // Return checkbox values as JSON
+if (isset($_GET['place'])) {
+    $place = $_GET['place'];
+    $pk = extractPk($place);
+    $c_d = extractC_d($place);
+    $checkboxValues = FormsPlugin::getEquipments($pk,$c_d);
     header('Content-Type: application/json');
     echo json_encode($checkboxValues);
     exit;
 }
 else {
     header("HTTP/1.0 400 Bad Request");
-    echo "Cabinet not provided";
+    echo "Place not provided";
     exit;
 }
 
-function extractSerialNumber($cabinet) {
-    // Define the pattern to match the serial number
-    $pattern = '/Série:\s*(\S+)/';
-
-    // Perform the regular expression match
-    if (preg_match($pattern, $cabinet, $matches)) {
-        // Extract the serial number from the matches array
-        return $matches[1];
-    } else {
-        // No match found
-        return "Serial number not found.";
+function extractPk($place) {
+    if (preg_match('/km\s+([\d.]+)/', $place, $matches)) {
+        return "km " . $matches[1];
     }
+    return null;
+}
+
+function extractC_d($place) {
+    if (preg_match('/\b([A-Za-z])\b/', $place, $matches)) {
+        return $matches[1];
+    }
+    return null;
 }
 ?>

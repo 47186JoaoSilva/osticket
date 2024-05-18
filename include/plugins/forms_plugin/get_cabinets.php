@@ -2,9 +2,9 @@
 require('staff.inc.php');
 if (isset($_GET['address']) && $_GET['address'] !== "") {
     $address = $_GET['address'];
-    $cabinets = FormsPlugin::getCabinets($address, null);
+    $places = FormsPlugin::getPlaces($address);
     header('Content-Type: application/json');
-    echo json_encode($cabinets);
+    echo json_encode($places);
     exit;
 }
 else {
