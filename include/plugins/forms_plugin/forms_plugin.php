@@ -1,11 +1,9 @@
 <?php
-// Include necessary osTicket files
 require_once(INCLUDE_DIR . 'class.plugin.php');
 require_once(INCLUDE_DIR . 'class.signal.php');
 require_once(INCLUDE_DIR . 'class.app.php');
 require_once(INCLUDE_DIR . 'class.dispatcher.php');
 
-// Define your plugin class
 class FormsPlugin extends Plugin {
     function bootstrap() {
         //Signal quando o plugin é ativado ou desativado
@@ -164,17 +162,13 @@ class FormsPlugin extends Plugin {
     function replaceFile($file_path, $modified_file_name) {
         $modified_file_path = __DIR__ . '\modified_files' . '/' . $modified_file_name;
         
-        // Check if both files exist
         if (file_exists($file_path) && file_exists($modified_file_path)) {
-            // Read the content of the modified file
             $modified_content = file_get_contents($modified_file_path);
             
             //Copiar o ficheiro original para o backup
             
-            // Write the modified content to the original file, overwriting the existing content
             file_put_contents($file_path, $modified_content);
         } else {
-            // Handle the case where either file doesn't exist
             if (!file_exists($file_path)) {
                 error_log("$file_path does not exist!");
             }
@@ -184,29 +178,23 @@ class FormsPlugin extends Plugin {
         }
     }
     
-    // Function to restore the original content of a file
     function restoreFile($file_path,$backup_path) {
         $backup_file_path = __DIR__ . '\backup_files' . '/' . basename($backup_path);
         
-        // Check if the backup file exists
         if (file_exists($backup_file_path)) {
-            // Restore the backup file to the original location
             copy($backup_file_path, $file_path);
             // Delete the backup file after restoring
             //unlink($backup_file_path);
         } else {
-            // Handle the case where the backup file doesn't exist
             error_log("Backup file for $file_path does not exist!");
         }
     }
     
     function moveFileToDirectory($source, $destination) {
-        // Check if the source file exists
         if (!file_exists($source)) {
             return "Source file does not exist.";
         }
 
-        // Attempt to move the file
         if (rename($source, $destination)) {
             return "File moved successfully.";
         } else {
@@ -241,9 +229,8 @@ class FormsPlugin extends Plugin {
                 }
                 return $districts;
             } else {
-                // Handle the case where the query fails
                 error_log("Error fetching isactive from ost_plugin table");
-                return false; // Return false if unable to fetch isactive
+                return false; 
             }
         } else {
             $query = "SELECT DISTINCT district FROM sincro_cabinet WHERE address = '$address'";
@@ -256,9 +243,8 @@ class FormsPlugin extends Plugin {
                 }
                 return $districts;
             } else {
-                // Handle the case where the query fails
                 error_log("Error fetching isactive from ost_plugin table");
-                return false; // Return false if unable to fetch isactive
+                return false; 
             }
         }
     }
@@ -369,9 +355,8 @@ class FormsPlugin extends Plugin {
             $row = db_fetch_array($cabinIdresult);
             return $row['id']; 
         } else {
-            // Handle the case where the query fails
             error_log("Error fetching cabinId from SINCRO_Cabinet table");
-            return false; // Return false if unable to fetch isactive
+            return false; 
         }
     }
     
@@ -382,9 +367,8 @@ class FormsPlugin extends Plugin {
             $row = db_fetch_array($cinemometerIdResult);
             return $row['idCinemometer']; 
         } else {
-            // Handle the case where the query fails
             error_log("Error fetching cinemometerId from SINCRO_Cabinet_has_Cinemometer table");
-            return false; // Return false if unable to fetch isactive
+            return false;
         }
     }
     
@@ -395,9 +379,8 @@ class FormsPlugin extends Plugin {
             $row = db_fetch_array($routerIdResult);
             return $row['idRouter']; 
         } else {
-            // Handle the case where the query fails
             error_log("Error fetching routerId from SINCRO_Cabinet_has_Router table");
-            return false; // Return false if unable to fetch isactive
+            return false;
         }
     }
     
@@ -408,9 +391,8 @@ class FormsPlugin extends Plugin {
             $row = db_fetch_array($upsIdresult);
             return $row['id_ups']; 
         } else {
-            // Handle the case where the query fails
             error_log("Error fetching upsId from SINCRO_Cabinet table");
-            return false; // Return false if unable to fetch isactive
+            return false;
         }
     }
     
@@ -496,7 +478,7 @@ class FormsPlugin extends Plugin {
         }
     }
     
-    function deleteLinesFromTable() { //APAGAR TAMBEM AS LINHAS DA TABELA CDATA ATRAVES DO ticket_id
+    function deleteLinesFromTable() { 
         $ticketIdsQuery = "SELECT ticket_id FROM ost_ticket WHERE cabinet_id != 0";
         $ticketIdsResult = db_query($ticketIdsQuery);
 
@@ -511,7 +493,6 @@ class FormsPlugin extends Plugin {
                 }
             }
 
-            // Step 3: Execute the original deletion query from ost_ticket
             $deleteTicketsQuery = "DELETE FROM ost_ticket WHERE cabinet_id != 0";
             $deleteTicketsResult = db_query($deleteTicketsQuery);
 
@@ -519,11 +500,9 @@ class FormsPlugin extends Plugin {
                 error_log("Tickets deleted successfully where cabinet_id was not 0.");
             } else {
                 error_log("Error deleting tickets where cabinet_id was not 0: " . db_error());
-                // Optionally, handle error or log it
             }
         } else {
             error_log("Error fetching ticket IDs from ost_ticket: " . db_error());
-            // Optionally, handle error or log it
         }
     }  
 
@@ -541,7 +520,6 @@ class FormsPlugin extends Plugin {
         );
 
         foreach ($columns as $column) {
-            // Define the SQL query to drop the column
             $query = "ALTER TABLE `ost_ticket` DROP COLUMN `$column`";
 
             if (db_query($query)) {
@@ -553,39 +531,30 @@ class FormsPlugin extends Plugin {
     }
     
     function isPluginActive() {
-        // Define your SQL query to fetch isactive from ost_plugin table
-        $query = "SELECT isactive FROM ost_plugin WHERE name = 'Forms Plugin'"; //TODO(): Is this the best way?
+        $query = "SELECT isactive FROM ost_plugin WHERE name = 'Forms Plugin'"; 
 
-        // Execute the query
         $result = db_query($query);
 
-        // Check if the query was successful
         if ($result) {
             $row = db_fetch_array($result);
-            return $row['isactive']; // Return the value of isactive
+            return $row['isactive'];
         } else {
-            // Handle the case where the query fails
             error_log("Error fetching isactive from ost_plugin table");
-            return false; // Return false if unable to fetch isactive
+            return false;
         }
     }
     
     function doesColumnExist() {
-        // Define your SQL query to check if the column exists in the specified table
         $query = "SHOW COLUMNS FROM ost_ticket LIKE 'cabinet_id'";
 
-        // Execute the query
         $result = db_query($query);
 
-        // Check if the query was successful
         if ($result) {
-            // Check if the column exists
             $rowCount = db_num_rows($result);
-            return ($rowCount > 0); // Return true if the column exists, false otherwise
+            return ($rowCount > 0); 
         } else {
-            // Handle the case where the query fails
             error_log("Error checking column existence in table ost_ticket");
-            return false; // Return false if unable to check column existence
+            return false;
         }
     }
  
@@ -597,7 +566,6 @@ class FormsPlugin extends Plugin {
         $mysqlPath = 'C:/xampp/mysql/bin/mysql.exe';
         $backupFile = 'C:/xampp/htdocs/osticket/include/plugins/forms_plugin/mysqldump/combined_backup.sql';
 
-        // Command to restore the backup
         $restoreCommand = "$mysqlPath -h $dbHost -u $dbUser -p$dbPass $dbName < \"$backupFile\"";
         system($restoreCommand, $result);
 
@@ -623,7 +591,6 @@ class FormsPlugin extends Plugin {
         $mysqlDumpPath = 'C:/xampp/mysql/bin/mysqldump.exe';
         $backupDir = 'C:/xampp/htdocs/osticket/include/plugins/forms_plugin/mysqldump/';
 
-        // Backup ost_ticket__cdata table and ost_ticket table
         $backupCommand = "$mysqlDumpPath -h $dbHost -u $dbUser -p$dbPass $dbName ost_ticket__cdata ost_ticket > \"" . $backupDir . "combined_backup.sql\"";
         system($backupCommand, $result);
 
