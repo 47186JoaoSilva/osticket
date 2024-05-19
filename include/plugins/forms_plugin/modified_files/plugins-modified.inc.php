@@ -153,9 +153,7 @@ if ($count) //Show options..
 <script>
     function handleCheckbox() {
         var checkbox = document.getElementById("eraseDataCheckbox");
-        console.log("Checked");
         if (checkbox.checked) {
-            console.log("Checked");
             // Make an AJAX request to a PHP script that contains the function you want to call
             var xmlhttp = new XMLHttpRequest();
             xmlhttp.onreadystatechange = function() {
@@ -164,7 +162,6 @@ if ($count) //Show options..
                     console.log(this.responseText);
                 }
             };
-            console.log("Checked1");
             xmlhttp.open("GET", "erase_data.php", true);
             xmlhttp.send();
         }

@@ -590,75 +590,47 @@ class FormsPlugin extends Plugin {
     }
  
     function copyBackupIfExists() {
-        // Check if backup tables exist
-        $ticketBackupExists = db_query("SHOW TABLES LIKE 'ost_ticket_backup'")->num_rows > 0;
-        $cdataBackupExists = db_query("SHOW TABLES LIKE 'ost_ticket__cdata_backup'")->num_rows > 0;
+        $dbHost = 'localhost'; 
+        $dbUser = 'osticket'; 
+        $dbPass = 'localhost'; 
+        $dbName = 'osticket'; 
+        $mysqlPath = 'C:/xampp/mysql/bin/mysql.exe';
+        $backupFile = 'C:/xampp/htdocs/osticket/include/plugins/forms_plugin/mysqldump/combined_backup.sql';
 
-        // If backup tables exist, copy data
-        if ($ticketBackupExists) {
-            // Copy data from ost_ticket_backup to ost_ticket
-            $copyTicketQuery = "INSERT INTO ost_ticket SELECT * FROM ost_ticket_backup";
-            $result1 = db_query($copyTicketQuery);
-            if (!$result1) {
-                error_log("Error copying data from ost_ticket_backup to ost_ticket: " . db_error());
-            }
-        }
+        // Command to restore the backup
+        $restoreCommand = "$mysqlPath -h $dbHost -u $dbUser -p$dbPass $dbName < \"$backupFile\"";
+        system($restoreCommand, $result);
 
-        if ($cdataBackupExists) {
-            // Copy data from ost_ticket__cdata_backup to ost_ticket__cdata
-            $copyCdataQuery = "INSERT INTO ost_ticket__cdata SELECT * FROM ost_ticket__cdata_backup";
-            $result2 = db_query($copyCdataQuery);
-            if (!$result2) {
-                error_log("Error copying data from ost_ticket__cdata_backup to ost_ticket__cdata: " . db_error());
-            }
-        }
-        
-        // Delete backup tables if they exist
-        if ($ticketBackupExists) {
-            $deleteTicketBackupQuery = "DROP TABLE ost_ticket_backup";
-            $result3 = db_query($deleteTicketBackupQuery);
-            if (!$result3) {
-                error_log("Error deleting backup table ost_ticket_backup: " . db_error());
-            }
-        }
-
-        if ($cdataBackupExists) {
-            $deleteCdataBackupQuery = "DROP TABLE ost_ticket__cdata_backup";
-            $result4 = db_query($deleteCdataBackupQuery);
-            if (!$result4) {
-                error_log("Error deleting backup table ost_ticket__cdata_backup: " . db_error());
-            }
-        }
-        
-        // Log success
-        if ($ticketBackupExists || $cdataBackupExists) {
-            error_log("Data copied from backup tables to original tables successfully.");
+        if ($result == 0) {
+            error_log("Backup restored successfully.");
         } else {
-            error_log("Backup tables do not exist.");
+            error_log("Error occurred during the restoration process. Error code: $result");
+        }
+        
+        if (unlink($backupFile)) {
+            error_log("Backup file combined_backup.sql deleted successfully.");
+        } else {
+            error_log("Error deleting backup file combined_backup.sql.");
         }
     }
 
     
     static function createBackupTables() { 
-        // Create ost_ticket_backup table and copy data
-        $createTicketTableQuery = "CREATE TABLE IF NOT EXISTS ost_ticket_backup SELECT * FROM ost_ticket WHERE cabinet_id != 0";
-        $result1 = db_query($createTicketTableQuery);
-        if (!$result1) {
-            error_log("Error creating table ost_ticket_backup: " . db_error());
-        }
+        $dbHost = 'localhost'; 
+        $dbUser = 'osticket'; 
+        $dbPass = 'localhost'; 
+        $dbName = 'osticket'; 
+        $mysqlDumpPath = 'C:/xampp/mysql/bin/mysqldump.exe';
+        $backupDir = 'C:/xampp/htdocs/osticket/include/plugins/forms_plugin/mysqldump/';
 
-        // Create ost_ticket__cdata_backup table and copy data
-        $createCdataTableQuery = "CREATE TABLE IF NOT EXISTS ost_ticket__cdata_backup SELECT * FROM ost_ticket__cdata WHERE ticket_id IN (SELECT ticket_id FROM ost_ticket WHERE cabinet_id != 0)";
-        $result2 = db_query($createCdataTableQuery);
-        if (!$result2) {
-            error_log("Error creating table ost_ticket__cdata_backup: " . db_error());
-        }
+        // Backup ost_ticket__cdata table and ost_ticket table
+        $backupCommand = "$mysqlDumpPath -h $dbHost -u $dbUser -p$dbPass $dbName ost_ticket__cdata ost_ticket > \"" . $backupDir . "combined_backup.sql\"";
+        system($backupCommand, $result);
 
-        // Log success
-        if ($result1 && $result2) {
-            error_log("Tables ost_ticket_backup and ost_ticket__cdata_backup created and data copied successfully.");
+        if ($result == 0) {
+            error_log("Backup files for ost_ticket and ost_ticket__cdata created successfully.");
         } else {
-            error_log("Tables ost_ticket_backup and ost_ticket__cdata_backup already exist.");
+            error_log("Error occurred during the backup creation. Error code: $result");
         }
     }
 }
