@@ -145,17 +145,17 @@ class FormsPlugin extends Plugin {
     }
     
     function moveToNewDirectory() {
-        $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/get_addresses.php', SCP_DIR . 'get_addresses.php');
-        $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/get_cabinets.php', SCP_DIR . 'get_cabinets.php');
-        $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/get_checkbox_values.php', SCP_DIR . 'get_checkbox_values.php');
-        $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/erase_data.php', SCP_DIR . 'erase_data.php');
+        $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/endpoints/get_addresses.php', SCP_DIR . 'get_addresses.php');
+        $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/endpoints/get_cabinets.php', SCP_DIR . 'get_cabinets.php');
+        $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/endpoints/get_checkbox_values.php', SCP_DIR . 'get_checkbox_values.php');
+        $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/endpoints/erase_data.php', SCP_DIR . 'erase_data.php');
     }
     
     function moveToOriginalDirectory() {
-        $this->moveFileToDirectory(SCP_DIR . 'get_addresses.php', INCLUDE_DIR . 'plugins/forms_plugin/get_addresses.php');
-        $this->moveFileToDirectory(SCP_DIR . 'get_cabinets.php', INCLUDE_DIR . 'plugins/forms_plugin/get_cabinets.php');
-        $this->moveFileToDirectory(SCP_DIR . 'get_checkbox_values.php', INCLUDE_DIR . 'plugins/forms_plugin/get_checkbox_values.php');
-        $this->moveFileToDirectory(SCP_DIR . 'erase_data.php', INCLUDE_DIR . 'plugins/forms_plugin/erase_data.php');
+        $this->moveFileToDirectory(SCP_DIR . 'get_addresses.php', INCLUDE_DIR . 'plugins/forms_plugin/endpoints/get_addresses.php');
+        $this->moveFileToDirectory(SCP_DIR . 'get_cabinets.php', INCLUDE_DIR . 'plugins/forms_plugin/endpoints/get_cabinets.php');
+        $this->moveFileToDirectory(SCP_DIR . 'get_checkbox_values.php', INCLUDE_DIR . 'plugins/forms_plugin/endpoints/get_checkbox_values.php');
+        $this->moveFileToDirectory(SCP_DIR . 'erase_data.php', INCLUDE_DIR . 'plugins/forms_plugin/endpoints/erase_data.php');
     }
     
     

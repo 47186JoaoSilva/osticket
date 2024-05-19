@@ -362,7 +362,7 @@ if ($_POST)
                         $districtOptions = FormsPlugin::getDistricts(null);
 
                         foreach ($districtOptions as $option) {
-                            $selected = ($info['district_option'] === $option) ? "selected" : ""; // Check if the option is selected
+                            $selected = ($info['district_option'] === $option) ? "selected" : "";
                             echo '<option value="' . $option . '" ' . $selected . '>' . $option . '</option>';
                         }
                         ?>

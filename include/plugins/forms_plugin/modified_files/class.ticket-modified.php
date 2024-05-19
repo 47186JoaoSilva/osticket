@@ -272,6 +272,7 @@ implements RestrictedAccess, Threadable, Searchable {
         return 'visual';
     }
     
+    //GETTERS FORMS PLUGIN_____________________________________________________
     function getCabinetId(){
         return $this->cabinet_id;
     }
@@ -331,6 +332,7 @@ implements RestrictedAccess, Threadable, Searchable {
     function isOtherBroken() {
         return $this->other_is_broken;
     }
+    //__________________________________________________________________________
     
     function isMerged() {
         if (!is_null($this->getPid()) || $this->isParent())
@@ -1174,6 +1176,7 @@ implements RestrictedAccess, Threadable, Searchable {
 
         // Special fields
         switch ($fid) {
+        //NEW FIELDS FOR BROKEN EQUIPMENTS_____________________________________
         case 'brokenCabin':
             return ChoiceField::init(array(
                         'id' => $fid,
@@ -1219,6 +1222,7 @@ implements RestrictedAccess, Threadable, Searchable {
                         'choices' => array("Não"=>"Não","Sim"=>"Sim")
                         ));
             break;
+        //____________________________________________________________________
         case 'priority':
             return $this->getPriorityField();
             break;
@@ -4219,10 +4223,11 @@ implements RestrictedAccess, Threadable, Searchable {
                 $fields['deptId']   = array('type'=>'int',  'required'=>0, 'error'=>__('Department selection is required'));
                 $fields['topicId']  = array('type'=>'int',  'required'=>1, 'error'=>__('Help topic selection is required'));
                 $fields['duedate']  = array('type'=>'date', 'required'=>0, 'error'=>__('Invalid date format - must be MM/DD/YY'));
+                //REQUIRED FIELDS FORMS PLUGIN__________________________________________________________________________________________
                 $fields['district_option']  = array('type'=>'string',  'required'=>1, 'error'=>__('District selection is required'));
                 $fields['address_option']  = array('type'=>'string',  'required'=>1, 'error'=>__('Address selection is required'));
                 $fields['place_option']  = array('type'=>'string',  'required'=>1, 'error'=>__('Place selection is required'));
-                
+                //______________________________________________________________________________________________________________________
             case 'api':
                 $fields['source']   = array('type'=>'string', 'required'=>1, 'error'=>__('Indicate ticket source'));
                 break;
@@ -4484,6 +4489,7 @@ implements RestrictedAccess, Threadable, Searchable {
             $ticket->duedate = date('Y-m-d G:i',
                 Misc::dbtime($vars['duedate']));
 
+        //SAVE VALUES OF NEW FORMS ELEMENTS TO DATABASE__________________________________
         if (isset($vars['place_option'])) {
             preg_match('/km\s+([\d.]+)/', $vars['place_option'], $matches);
             $pk = "km " . $matches[1];
@@ -4509,7 +4515,7 @@ implements RestrictedAccess, Threadable, Searchable {
             $ticket->ups_id = FormsPlugin::getUpsId($ticket->cabinet_id);
             $ticket->router_id = FormsPlugin::getRouterId($ticket->cabinet_id);
         }
-        
+        //________________________________________________________________________________
         if (!$ticket->save())
             return null;
         if (!($thread = TicketThread::create($ticket->getId())))
