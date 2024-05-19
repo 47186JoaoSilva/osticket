@@ -184,54 +184,66 @@ if ($info['topicId'] && ($topic=Topic::lookup($info['topicId']))) {
 </form>
 
 <script>
-// Define the updateAddressOptions function to fetch and populate address options based on the selected district
 function updateAddressOptions() {
     var selectedDistrict = document.getElementById("district_option").value;
     var addressCombobox = document.getElementById("address_option");
-    // Store the currently selected address before updating options
+    var placeCombobox = document.getElementById("place_option");
+    var checkboxContainer = document.getElementById("checkbox_container");
+
+    placeCombobox.innerHTML = "";
+    var defaultPlaceOption = document.createElement("option");
+    defaultPlaceOption.value = "";
+    defaultPlaceOption.text = "-Select Place-";
+    placeCombobox.add(defaultPlaceOption);
+
+    checkboxContainer.innerHTML = "";
+
     var selectedAddress = addressCombobox.value;
     
-    // Clear existing options
     addressCombobox.innerHTML = "";
 
-    // Fetch addresses for the selected district via AJAX
-    var xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-            var addresses = JSON.parse(this.responseText);
+    if (selectedDistrict !== "") {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                var addresses = JSON.parse(this.responseText);
 
-            var defaultOption = document.createElement("option");
-            defaultOption.value = ""; // Set default value
-            defaultOption.text = "-Select Address-"; // Set default text
-            addressCombobox.add(defaultOption);
+                var defaultOption = document.createElement("option");
+                defaultOption.value = "";
+                defaultOption.text = "-Select Address-"; 
+                addressCombobox.add(defaultOption);
 
-            // Populate options for the address combobox
-            addresses.forEach(function(address) {
-                var option = document.createElement("option");
-                option.value = address;
-                option.text = address;
-                addressCombobox.add(option);
-            });
+                addresses.forEach(function(address) {
+                    var option = document.createElement("option");
+                    option.value = address;
+                    option.text = address;
+                    addressCombobox.add(option);
+                });
 
-            // Keep the selected address if it's not a default option
-            if (selectedAddress && addresses.includes(selectedAddress)) {
-                addressCombobox.value = selectedAddress;
+                if (selectedAddress && addresses.includes(selectedAddress)) {
+                    addressCombobox.value = selectedAddress;
+                }
             }
-        }
-    };
-    var url = "scp/get_addresses.php?district=" + encodeURIComponent(selectedDistrict);
-    xmlhttp.open("GET", url, true);
-    xmlhttp.send();
+        };
+        var url = "scp/get_addresses.php?district=" + encodeURIComponent(selectedDistrict);
+        xmlhttp.open("GET", url, true);
+        xmlhttp.send();
+    } else {
+        var defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.text = "-Select Address-";
+        addressCombobox.add(defaultOption);
+    }
 }
 
 function updateCabinOptions() {
     var selectedAddress = document.getElementById("address_option").value;
     var placeCombobox = document.getElementById("place_option");
+    var checkboxContainer = document.getElementById("checkbox_container");
     
-    // Clear existing options
     placeCombobox.innerHTML = "";
+    checkboxContainer.innerHTML = "";
 
-    // Check if either district or address has a non-default value
     if (selectedAddress !== "") {
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.onreadystatechange = function() {
@@ -239,8 +251,8 @@ function updateCabinOptions() {
                 var places = JSON.parse(this.responseText);
 
                 var defaultOption = document.createElement("option");
-                defaultOption.value = ""; // Set default value
-                defaultOption.text = "-Select Place-"; // Set default text
+                defaultOption.value = ""; 
+                defaultOption.text = "-Select Place-"; 
                 placeCombobox.add(defaultOption);
 
                 places.forEach(function(place) {
@@ -278,12 +290,10 @@ function updateEquipments() {
                     equipments = ['Cabine','Router','UPS'];
                 }
                 
-                // Create checkboxes based on fetched values
                 checkboxValues.forEach(function(checkboxValue, index) {
                     var checkboxDiv = document.createElement("div");
                     checkboxDiv.className = "checkbox-item";
                     
-                    // Create checkbox label with text in bold
                     var label = document.createElement("label");
                     label.innerHTML = "<strong>" + equipments[index] +": </strong>" + checkboxValue;
                     checkboxDiv.appendChild(label);
@@ -315,7 +325,6 @@ function updateEquipments() {
             }
         };
 
-        // Fetch checkbox values from the server based on the selected cabinet
         var url = "scp/get_checkbox_values.php?place=" + encodeURIComponent(selectedPlace);
         xmlhttp.open("GET", url, true);
         xmlhttp.send();
