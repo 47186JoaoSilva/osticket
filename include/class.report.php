@@ -269,7 +269,7 @@ class OverviewReport {
             $times = $times->filter(array('staff_id__gt'=>0))->filter($Q);
             break;
         case 'ticket':
-            $headers = array(__('Oldest tickets'));
+            $headers = array(__('Oldest opened tickets'));
             $dash_headers = array(__('Created At'),__('Department'), __('Source'));
             $rows = DashboardPlugin::getTicketsData($start,$stop);
             return array("columns" => array_merge($headers, $dash_headers),
