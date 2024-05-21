@@ -143,7 +143,7 @@ class OverviewReport {
         return array("dept"=>__("Department"), "topic"=>__("Topics"),
             # XXX: This will be relative to permissions based on the
             # logged-in-staff. For basic staff, this will be 'My Stats'
-            "staff"=>__("Agent"));
+            "staff"=>__("Agent"), "ticket"=>__("Tickets"),);
     }
 
     function getTabularData($group='dept') {
@@ -267,6 +267,13 @@ class OverviewReport {
                 $Q->add(array('dept_id__in' => $depts));
             $stats = $stats->filter(array('staff_id__gt'=>0))->filter($Q);
             $times = $times->filter(array('staff_id__gt'=>0))->filter($Q);
+            break;
+        case 'ticket':
+            $headers = array(__('Oldest tickets'));
+            $dash_headers = array(__('Created At'),__('Department'), __('Source'));
+            $rows = DashboardPlugin::getTicketsData($start,$stop);
+            return array("columns" => array_merge($headers, $dash_headers),
+                     "data" => $rows);
             break;
         default:
             # XXX: Die if $group not in $groups
