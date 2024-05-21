@@ -96,6 +96,9 @@ class OverviewReport {
         $events = array();
         while ($row = db_fetch_row($res)) $events[] = __($row[0]);
 
+        # Add the "opened-closed" event
+        $events[] = "created-closed";
+
         # TODO: Handle user => db timezone offset
         # XXX: Implement annulled column from the %ticket_event table
         $res = db_query('SELECT H.name, DATE_FORMAT(timestamp, \'%Y-%m-%d\'), '
@@ -135,6 +138,17 @@ class OverviewReport {
         }
         foreach (array_diff($events, $slots) as $slot)
             $plots[$slot][] = 0;
+
+        
+        # Calculate the "opened-closed" difference for the previous time slot
+        $created = isset($plots['created']) ? end($plots['created']) : 0;
+        $closed = isset($plots['closed']) ? end($plots['closed']) : 0;
+        $plots['created-closed'][0] = $created - $closed;
+        
+        # Calculate the "opened-closed" difference for the last time slot
+        $created = isset($plots['created']) ? end($plots['created']) : 0;
+        $closed = isset($plots['closed']) ? end($plots['closed']) : 0;
+        $plots['created-closed'][1] = $created - $closed;
 
         return array("times" => $times, "plots" => $plots, "events" => $events);
     }
