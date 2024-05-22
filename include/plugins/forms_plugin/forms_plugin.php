@@ -229,7 +229,7 @@ class FormsPlugin extends Plugin {
                 }
                 return $districts;
             } else {
-                error_log("Error fetching isactive from ost_plugin table");
+                error_log("");
                 return false; 
             }
         } else {
@@ -243,7 +243,7 @@ class FormsPlugin extends Plugin {
                 }
                 return $districts;
             } else {
-                error_log("Error fetching isactive from ost_plugin table");
+                error_log("");
                 return false; 
             }
         }
@@ -260,7 +260,7 @@ class FormsPlugin extends Plugin {
             }
             return $addresses;
         } else {
-            error_log("Error fetching isactive from ost_plugin table");
+            error_log("");
             return false; 
         }
     }
@@ -277,7 +277,7 @@ class FormsPlugin extends Plugin {
                 }
                 return $places;
             } else {
-                error_log("Error fetching isactive from ost_plugin table");
+                error_log("");
                 return false; 
             }
         } 
@@ -455,7 +455,7 @@ class FormsPlugin extends Plugin {
     }
     
     function isPluginActive() {
-        $query = "SELECT isactive FROM ost_plugin WHERE name = 'Forms Plugin'"; 
+        $query = "SELECT isactive FROM " . TABLE_PREFIX . "plugin WHERE name = 'Forms Plugin'"; 
 
         $result = db_query($query);
 
@@ -463,7 +463,7 @@ class FormsPlugin extends Plugin {
             $row = db_fetch_array($result);
             return $row['isactive'];
         } else {
-            error_log("Error fetching isactive from ost_plugin table");
+            error_log("Error fetching isactive from " . TABLE_PREFIX . "plugin table");
             return false;
         }
     }
@@ -482,7 +482,7 @@ class FormsPlugin extends Plugin {
         );
 
         foreach ($columns as $column => $definition) {
-            $query = "ALTER TABLE `ost_ticket` ADD COLUMN `$column` $definition";
+            $query = "ALTER TABLE `" . TABLE_PREFIX . "ticket` ADD COLUMN `$column` $definition";
 
             if (db_query($query)) {
                 error_log("Column '$column' added successfully.");
@@ -493,7 +493,7 @@ class FormsPlugin extends Plugin {
     }
     
     function doesColumnExist() {
-        $query = "SHOW COLUMNS FROM ost_ticket LIKE 'cabinet_id'";
+        $query = "SHOW COLUMNS FROM " . TABLE_PREFIX . "ticket LIKE 'cabinet_id'";
 
         $result = db_query($query);
 
@@ -501,27 +501,27 @@ class FormsPlugin extends Plugin {
             $rowCount = db_num_rows($result);
             return ($rowCount > 0); 
         } else {
-            error_log("Error checking column existence in table ost_ticket");
+            error_log("Error checking column existence in table " . TABLE_PREFIX . "ticket");
             return false;
         }
     }
     
     function deleteLinesFromTable() { 
-        $ticketIdsQuery = "SELECT ticket_id FROM ost_ticket WHERE cabinet_id != 0";
+        $ticketIdsQuery = "SELECT ticket_id FROM " . TABLE_PREFIX . "ticket WHERE cabinet_id != 0";
         $ticketIdsResult = db_query($ticketIdsQuery);
 
         if ($ticketIdsResult) {
             while ($row = db_fetch_array($ticketIdsResult)) {
                 $ticketId = $row['ticket_id'];
-                $deleteCdataQuery = "DELETE FROM ost_ticket__cdata WHERE ticket_id = $ticketId";
+                $deleteCdataQuery = "DELETE FROM " . TABLE_PREFIX . "ticket__cdata WHERE ticket_id = $ticketId";
                 $deleteCdataResult = db_query($deleteCdataQuery);
 
                 if (!$deleteCdataResult) {
-                    error_log("Error deleting related data from ost_ticket__cdata for ticket ID $ticketId: " . db_error());
+                    error_log("Error deleting related data from " . TABLE_PREFIX . "ticket__cdata for ticket ID $ticketId: " . db_error());
                 }
             }
 
-            $deleteTicketsQuery = "DELETE FROM ost_ticket WHERE cabinet_id != 0";
+            $deleteTicketsQuery = "DELETE FROM " . TABLE_PREFIX . "ticket WHERE cabinet_id != 0";
             $deleteTicketsResult = db_query($deleteTicketsQuery);
 
             if ($deleteTicketsResult) {
@@ -530,7 +530,7 @@ class FormsPlugin extends Plugin {
                 error_log("Error deleting tickets where cabinet_id was not 0: " . db_error());
             }
         } else {
-            error_log("Error fetching ticket IDs from ost_ticket: " . db_error());
+            error_log("Error fetching ticket IDs from " . TABLE_PREFIX . "ticket: " . db_error());
         }
     }  
 
@@ -548,7 +548,7 @@ class FormsPlugin extends Plugin {
         );
 
         foreach ($columns as $column) {
-            $query = "ALTER TABLE `ost_ticket` DROP COLUMN `$column`";
+            $query = "ALTER TABLE `" . TABLE_PREFIX . "ticket` DROP COLUMN `$column`";
 
             if (db_query($query)) {
                 error_log("Column '$column' deleted successfully.");
@@ -559,12 +559,12 @@ class FormsPlugin extends Plugin {
     }
  
     function copyBackupIfExists() {
-        $dbHost = 'localhost'; 
-        $dbUser = 'osticket'; 
-        $dbPass = 'localhost'; 
-        $dbName = 'osticket'; 
+        $dbHost = DBHOST; 
+        $dbUser = DBUSER; 
+        $dbPass = DBPASS; 
+        $dbName = DBNAME; 
         $mysqlPath = 'C:/xampp/mysql/bin/mysql.exe';
-        $backupFile = 'C:/xampp/htdocs/osticket/include/plugins/forms_plugin/mysqldump/combined_backup.sql';
+        $backupFile = INCLUDE_DIR . "plugins/forms_plugin/mysqldump/combined_backup.sql";
 
         $restoreCommand = "$mysqlPath -h $dbHost -u $dbUser -p$dbPass $dbName < \"$backupFile\"";
         system($restoreCommand, $result);
@@ -584,18 +584,18 @@ class FormsPlugin extends Plugin {
 
     
     static function createBackupTables() { 
-        $dbHost = 'localhost'; 
-        $dbUser = 'osticket'; 
-        $dbPass = 'localhost'; 
-        $dbName = 'osticket'; 
+        $dbHost = DBHOST; 
+        $dbUser = DBUSER; 
+        $dbPass = DBPASS; 
+        $dbName = DBNAME; 
         $mysqlDumpPath = 'C:/xampp/mysql/bin/mysqldump.exe';
-        $backupDir = 'C:/xampp/htdocs/osticket/include/plugins/forms_plugin/mysqldump/';
+        $backupDir = INCLUDE_DIR . "plugins/forms_plugin/mysqldump/";
 
-        $backupCommand = "$mysqlDumpPath -h $dbHost -u $dbUser -p$dbPass $dbName ost_ticket__cdata ost_ticket > \"" . $backupDir . "combined_backup.sql\"";
+        $backupCommand = "$mysqlDumpPath -h $dbHost -u $dbUser -p$dbPass $dbName " . TABLE_PREFIX . "ticket__cdata " . TABLE_PREFIX . "ticket > \"" . $backupDir . "combined_backup.sql\"";
         system($backupCommand, $result);
 
         if ($result == 0) {
-            error_log("Backup files for ost_ticket and ost_ticket__cdata created successfully.");
+            error_log("Backup files for " . TABLE_PREFIX . "ticket and " . TABLE_PREFIX . "ticket__cdata created successfully.");
         } else {
             error_log("Error occurred during the backup creation. Error code: $result");
         }
