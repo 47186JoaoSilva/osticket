@@ -139,13 +139,11 @@ class OverviewReport {
             $plots[$slot][] = 0;
 
         
-        $created = isset($plots['created']) ? end($plots['created']) : 0;
-        $closed = isset($plots['closed']) ? end($plots['closed']) : 0;
-        $plots['created-closed'][0] = $created - $closed;
-        
-        $created = isset($plots['created']) ? end($plots['created']) : 0;
-        $closed = isset($plots['closed']) ? end($plots['closed']) : 0;
-        $plots['created-closed'][1] = $created - $closed;
+        for ($i = 0; $i < sizeof($plots['created']); $i++) {
+            $created = $plots['created'][$i] ?? 0;
+            $closed = $plots['closed'][$i] ?? 0;
+            $plots['created-closed'][$i] = $created - $closed;
+        }
 
         return array("times" => $times, "plots" => $plots, "events" => $events);
     }
