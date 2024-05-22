@@ -453,7 +453,21 @@ class FormsPlugin extends Plugin {
             return $row['address']; 
         }
     }
+    
+    function isPluginActive() {
+        $query = "SELECT isactive FROM ost_plugin WHERE name = 'Forms Plugin'"; 
 
+        $result = db_query($query);
+
+        if ($result) {
+            $row = db_fetch_array($result);
+            return $row['isactive'];
+        } else {
+            error_log("Error fetching isactive from ost_plugin table");
+            return false;
+        }
+    }
+    
     function addColumnsToTable() {
         $columns = array(
             'cabinet_id' => "INT DEFAULT NULL",
@@ -475,6 +489,20 @@ class FormsPlugin extends Plugin {
             } else {
                 error_log("Error adding column '$column' to table.");
             }
+        }
+    }
+    
+    function doesColumnExist() {
+        $query = "SHOW COLUMNS FROM ost_ticket LIKE 'cabinet_id'";
+
+        $result = db_query($query);
+
+        if ($result) {
+            $rowCount = db_num_rows($result);
+            return ($rowCount > 0); 
+        } else {
+            error_log("Error checking column existence in table ost_ticket");
+            return false;
         }
     }
     
@@ -527,34 +555,6 @@ class FormsPlugin extends Plugin {
             } else {
                 error_log("Error deleting column '$column' from table.");
             }
-        }
-    }
-    
-    function isPluginActive() {
-        $query = "SELECT isactive FROM ost_plugin WHERE name = 'Forms Plugin'"; 
-
-        $result = db_query($query);
-
-        if ($result) {
-            $row = db_fetch_array($result);
-            return $row['isactive'];
-        } else {
-            error_log("Error fetching isactive from ost_plugin table");
-            return false;
-        }
-    }
-    
-    function doesColumnExist() {
-        $query = "SHOW COLUMNS FROM ost_ticket LIKE 'cabinet_id'";
-
-        $result = db_query($query);
-
-        if ($result) {
-            $rowCount = db_num_rows($result);
-            return ($rowCount > 0); 
-        } else {
-            error_log("Error checking column existence in table ost_ticket");
-            return false;
         }
     }
  
