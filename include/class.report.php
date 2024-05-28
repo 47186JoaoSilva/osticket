@@ -283,9 +283,9 @@ class OverviewReport {
             $times = $times->filter(array('staff_id__gt'=>0))->filter($Q);
             break;
         case 'ticket':
-            $headers = array(__('Oldest opened tickets'));
+            $headers = array(__('Old Runners'));
             $dash_headers = array(__('Created At'),__('Department'), __('Source'));
-            $rows = DashboardPlugin::getTicketsData($start,$stop);
+            $rows = DashboardPlugin::getTicketsData($start,$stop, $this->tickets_per_page);
             return array("columns" => array_merge($headers, $dash_headers),
                      "data" => $rows);
             break;

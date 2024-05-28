@@ -9,7 +9,7 @@ class DashboardPlugin extends Plugin {
        
     }*/
     
-    static function getTicketsData($start,$stop) {
+    static function getTicketsData($start,$stop,$ticketsPerPage) {
         $query = "SELECT t.source, t.number, t.created, d.name as dept_name, c.subject 
             FROM ost_ticket t
             JOIN ost_ticket__cdata c ON t.ticket_id = c.ticket_id
@@ -17,7 +17,7 @@ class DashboardPlugin extends Plugin {
             WHERE t.created BETWEEN $start AND $stop
             AND (t.closed IS NULL OR t.reopened IS NOT NULL AND t.reopened > t.closed)
             ORDER BY t.created ASC
-            LIMIT 10";
+            LIMIT $ticketsPerPage";
 
         $result = db_query($query);
 
