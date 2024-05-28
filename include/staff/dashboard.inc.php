@@ -1,7 +1,6 @@
 <?php
-$report = new OverviewReport($_POST['start'], $_POST['period']);
+$report = new OverviewReport($_POST['start'], $_POST['period'], $_POST['tickets_per_page']);
 $plots = $report->getPlotData();
-
 ?>
 <script type="text/javascript" src="js/raphael-min.js?0375576"></script>
 <script type="text/javascript" src="js/g.raphael.js?0375576"></script>
@@ -15,26 +14,34 @@ $plots = $report->getPlotData();
 <div id="basic_search">
     <div style="min-height:25px;">
         <!--<p><?php //echo __('Select the starting time and period for the system activity graph');?></p>-->
-            <?php echo csrf_token(); ?>
-            <label>
+        <?php echo csrf_token(); ?>
+        <label>
                 <?php echo __( 'Report timeframe'); ?>:
-                <input type="text" class="dp input-medium search-query"
-                    name="start" placeholder="<?php echo __('Last month');?>"
-                    value="<?php
-                        echo Format::htmlchars($report->getStartDate());
-                    ?>" />
-            </label>
-            <label>
+            <input type="text" class="dp input-medium search-query"
+                name="start" placeholder="<?php echo __('Last month');?>"
+                value="<?php
+                    echo Format::htmlchars($report->getStartDate());
+                ?>" />
+        </label>
+        <label>
                 <?php echo __('period');?>:
-                <select name="period">
-                    <?php foreach ($report::$end_choices as $val=>$desc)
+            <select name="period">
+                <?php foreach ($report::$end_choices as $val=>$desc)
                             echo "<option value='$val'>" . __($desc) . "</option>"; ?>
-                </select>
-            </label>
-            <button class="green button action-button muted" type="submit">
+            </select>
+        </label>
+        <label>
+            <?php echo __('Tickets per page');?>:
+            <select name="tickets_per_page">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+            </select>
+        </label>
+        <button class="green button action-button muted" type="submit">
                 <?php echo __( 'Refresh');?>
-            </button>
-            <i class="help-tip icon-question-sign" href="#report_timeframe"></i>
+        </button>
+        <i class="help-tip icon-question-sign" href="#report_timeframe"></i>
     </div>
 </div>
 <div class="clear"></div>
@@ -164,7 +171,6 @@ foreach ($groups as $g=>$desc) {
 <?php
 }
 ?>
-</form>
 <script>
     $.drawPlots(<?php echo JsonDataEncoder::encode($report->getPlotData()); ?>);
     // Set Selected Period For Dashboard Stats and Export
@@ -175,8 +181,17 @@ foreach ($groups as $g=>$desc) {
                 $(this).removeAttr('selected');
             // Set the selected period by the option's value (periods equal
             // option's values)
-            if ($(this).val() == "<?php echo $report->end; ?>")
+            console.log($(this).val());
+            
+            if ($(this).val() == "<?php echo $report->end; ?>") {
+                console.log("<?php echo $report->end; ?>");
+                console.log($(this).attr("selected","selected"));
                 $(this).attr("selected","selected");
+            }
+            console.log("<?php echo $tickets_per_page; ?>");
+            if ($(this).val() == "<?php echo $tickets_per_page; ?>") {
+                $(this).attr("selected", "selected");
+            }
         });
     <?php } ?>
 </script>

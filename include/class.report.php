@@ -32,13 +32,16 @@ class OverviewReport {
     ];
 
     var $format;
+    
+    var $tickets_per_page;
 
-    function __construct($start, $end='now', $format=null) {
+    function __construct($start, $end='now', $tickets_per_page=null, $format=null) {
         global $cfg;
 
         $this->start = Format::sanitize($start);
         $this->end = array_key_exists($end, self::$end_choices) ? $end : 'now';
         $this->format = $format ?: $cfg->getDateFormat(true);
+        $this->tickets_per_page  = is_numeric($tickets_per_page) ? (int)$tickets_per_page : 10;
     }
 
 
