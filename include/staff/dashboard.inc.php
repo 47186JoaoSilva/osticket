@@ -174,7 +174,7 @@ foreach ($groups as $g=>$desc) {
 <script>
     $.drawPlots(<?php echo JsonDataEncoder::encode($report->getPlotData()); ?>);
     // Set Selected Period For Dashboard Stats and Export
-    <?php if ($report && $report->end) { ?>
+    <?php if ($report && $report->end && $report->tickets_per_page) { ?>
         $("div#basic_search select option").each(function(){
             // Remove default selection
             if ($(this)[0].selected)
@@ -188,8 +188,8 @@ foreach ($groups as $g=>$desc) {
                 console.log($(this).attr("selected","selected"));
                 $(this).attr("selected","selected");
             }
-            console.log("<?php echo $tickets_per_page; ?>");
-            if ($(this).val() == "<?php echo $tickets_per_page; ?>") {
+            console.log("<?php echo $report->tickets_per_page; ?>");
+            if ($(this).val() == "<?php echo $report->tickets_per_page; ?>") {
                 $(this).attr("selected", "selected");
             }
         });
