@@ -181,17 +181,10 @@ foreach ($groups as $g=>$desc) {
                 $(this).removeAttr('selected');
             // Set the selected period by the option's value (periods equal
             // option's values)
-            console.log($(this).val());
-            
-            if ($(this).val() == "<?php echo $report->end; ?>") {
-                console.log("<?php echo $report->end; ?>");
-                console.log($(this).attr("selected","selected"));
+            if ($(this).val() == "<?php echo $report->end; ?>") 
                 $(this).attr("selected","selected");
-            }
-            console.log("<?php echo $report->tickets_per_page; ?>");
-            if ($(this).val() == "<?php echo $report->tickets_per_page; ?>") {
+            if ($(this).val() == "<?php echo $report->tickets_per_page; ?>") 
                 $(this).attr("selected", "selected");
-            }
         });
     <?php } ?>
 </script>
