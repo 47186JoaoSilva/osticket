@@ -7,71 +7,72 @@ require_once(INCLUDE_DIR . 'class.dispatcher.php');
 class DashboardPlugin extends Plugin {
     function bootstrap() {
         //Signal quando o plugin é ativado ou desativado
-        Signal::connect('model.updated', array($this, 'applyPatchToFile'));
+        Signal::connect('model.updated', array($this, 'applyPatchOrRestoreFile'));
         
         //Signal quando o plugin é apagado
-        Signal::connect('model.deleted', array($this, 'applyPatchToFile'));
+        Signal::connect('model.deleted', array($this, 'applyPatchOrRestoreFile'));
     }
     
-    function applyPatchToFile() {
-        $this->applyPatchToClassReport();
-        $this->applyPatchToDashboardInc();
+    function applyPatchOrRestoreFile() {
+        if($this->isPluginActive()) {
+            if(!$this->isCodeAlreadyInserted(INCLUDE_DIR . 'staff/dashboard.inc.php', $this->dashboardIncPatch3)) {
+                $this->applyPatchToClassReport();
+                $this->applyPatchToDashboardInc();
+            }
+        } else {
+            if($this->isCodeAlreadyInserted(INCLUDE_DIR . 'staff/dashboard.inc.php', $this->dashboardIncPatch3)) {
+                $this->restoreClassReportFile();
+                $this->restoreDashboardFile();
+            }
+        }
     }
     
     function applyPatchToClassReport() {
-        if($this->isPluginActive()) {
-            $this->insertCodeIntoFile(
-                INCLUDE_DIR . 'class.report.php', 
-                $this->classReportPatch1, 
-                'var $format;', 
-                'function getStartDate($format=null, $translate=true) {'
-            );
-            $this->insertCodeIntoFile(
-                INCLUDE_DIR . 'class.report.php', 
-                $this->classReportPatch2, 
-                'while ($row = db_fetch_row($res)) $events[] = __($row[0]);', 
-                '# TODO: Handle user => db timezone offset'
-            );
-            $this->insertCodeIntoFile(
-                INCLUDE_DIR . 'class.report.php', 
-                $this->classReportPatch3, 
-                '$plots[__($row[0])][] = (int)$row[2];', 
-                'function getTabularData($group=\'dept\') {'
-            );
-            $this->insertCodeIntoFile(
-                INCLUDE_DIR . 'class.report.php', 
-                $this->classReportPatch4, 
-                '$times = $times->filter(array(\'staff_id__gt\'=>0))->filter($Q);', 
-                '# XXX: Die if $group not in $groups'
-            );
-        } else {
-            $this->restoreClassReportFile();
-        }
+        $this->insertCodeIntoFile(
+            INCLUDE_DIR . 'class.report.php', 
+            $this->classReportPatch1, 
+            'var $format;', 
+            'function getStartDate($format=null, $translate=true) {'
+        );
+        $this->insertCodeIntoFile(
+            INCLUDE_DIR . 'class.report.php', 
+            $this->classReportPatch2, 
+            'while ($row = db_fetch_row($res)) $events[] = __($row[0]);', 
+            '# TODO: Handle user => db timezone offset'
+        );
+        $this->insertCodeIntoFile(
+            INCLUDE_DIR . 'class.report.php', 
+            $this->classReportPatch3, 
+            '$plots[__($row[0])][] = (int)$row[2];', 
+            'function getTabularData($group=\'dept\') {'
+        );
+        $this->insertCodeIntoFile(
+            INCLUDE_DIR . 'class.report.php', 
+            $this->classReportPatch4, 
+            '$times = $times->filter(array(\'staff_id__gt\'=>0))->filter($Q);', 
+            '# XXX: Die if $group not in $groups'
+        );
     }
     
     function applyPatchToDashboardInc() {
-        if($this->isPluginActive()) {
-            $this->insertCodeIntoFile(
-                INCLUDE_DIR . 'staff/dashboard.inc.php', 
-                ', $_POST[\'tickets_per_page\']);', 
-                '$report = new OverviewReport($_POST[\'start\'], $_POST[\'period\']', 
-                '$plots = $report->getPlotData();'
-            );
-            $this->insertCodeIntoFile(
-                INCLUDE_DIR . 'staff/dashboard.inc.php', 
-                $this->dashboardIncPatch2, 
-                '<?php echo csrf_token(); ?>', 
-                '<button class="green button action-button muted" type="submit">'
-            );
-            $this->insertCodeIntoFile(
-                INCLUDE_DIR . 'staff/dashboard.inc.php', 
-                $this->dashboardIncPatch3, 
-                '<script>', 
-                '</script>'
-            );
-        } else {
-            $this->restoreDashboardFile();
-        }
+        $this->insertCodeIntoFile(
+            INCLUDE_DIR . 'staff/dashboard.inc.php', 
+            ', $_POST[\'tickets_per_page\']);', 
+            '$report = new OverviewReport($_POST[\'start\'], $_POST[\'period\']', 
+            '$plots = $report->getPlotData();'
+        );
+        $this->insertCodeIntoFile(
+            INCLUDE_DIR . 'staff/dashboard.inc.php', 
+            $this->dashboardIncPatch2, 
+            '<?php echo csrf_token(); ?>', 
+            '            <button class="green button action-button muted" type="submit">'
+        );
+        $this->insertCodeIntoFile(
+            INCLUDE_DIR . 'staff/dashboard.inc.php', 
+            $this->dashboardIncPatch3, 
+            '<script>', 
+            '</script>'
+        );
     }
     
     function restoreClassReportFile() {
@@ -95,34 +96,28 @@ class DashboardPlugin extends Plugin {
     }
     
     function insertCodeIntoFile($filePath, $newCode, $startPoint, $endPoint) {
-        // Read the file content
         $fileContent = file_get_contents($filePath);
         if ($fileContent === false) {
             throw new Exception("Failed to read file at $filePath");
         }
 
-        // Find the start point
         $startPos = strpos($fileContent, $startPoint);
         if ($startPos === false) {
             throw new Exception("Start point '$startPoint' not found in file $filePath");
         }
 
-        // Find the end point
         $endPos = strpos($fileContent, $endPoint, $startPos);
         if ($endPos === false) {
             throw new Exception("End point '$endPoint' not found in file $filePath");
         }
 
-        // Calculate the positions for insertion
         $startPointEnd = $startPos + strlen($startPoint);
         $endPointStart = $endPos;
 
-        // Construct the updated content
-        $updatedContent = substr($fileContent, 0, $startPointEnd) // Content before and including the start point
-            . "\n" . $newCode . "\n"                             // Insert new code
-            . substr($fileContent, $endPointStart);              // Content from the start of the end point onwards
+        $updatedContent = substr($fileContent, 0, $startPointEnd) 
+            . "\n" . $newCode . "\n"                             
+            . substr($fileContent, $endPointStart);              
 
-        // Write the updated content back to the file
         if (file_put_contents($filePath, $updatedContent) === false) {
             throw new Exception("Failed to write updated content to file $filePath");
         }
@@ -130,6 +125,14 @@ class DashboardPlugin extends Plugin {
         return true;
     }
 
+    function isCodeAlreadyInserted($filePath, $codeSnippet) {
+        $fileContent = file_get_contents($filePath);
+        if ($fileContent === false) {
+            throw new Exception("Failed to read file at $filePath");
+        }
+
+        return strpos($fileContent, $codeSnippet) !== false;
+    }
     
     static function getTicketsData($start,$stop,$ticketsPerPage) {
         $query = "SELECT t.source, t.number, t.created, d.name as dept_name, c.subject 
@@ -226,7 +229,7 @@ class DashboardPlugin extends Plugin {
     ';
     
     public $dashboardIncPatch2 = '
-        <label>
+            <label>
                 <?php echo __( \'Report timeframe\'); ?>:
                 <input type="text" class="dp input-medium search-query"
                     name="start" placeholder="<?php echo __(\'Last month\');?>"
