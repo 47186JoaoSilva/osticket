@@ -515,20 +515,32 @@ class FormsPlugin extends Plugin {
                 $ticketId = $row['ticket_id'];
                 $deleteCdataQuery = "DELETE FROM " . TABLE_PREFIX . "ticket__cdata WHERE ticket_id = $ticketId";
                 $deleteCdataResult = db_query($deleteCdataQuery);
-
-                if (!$deleteCdataResult) {
-                    error_log("Error deleting related data from " . TABLE_PREFIX . "ticket__cdata for ticket ID $ticketId: " . db_error());
-                }
-            }
-
-            $deleteTicketsQuery = "DELETE FROM " . TABLE_PREFIX . "ticket WHERE cabinet_id != 0";
-            $deleteTicketsResult = db_query($deleteTicketsQuery);
-
-            if ($deleteTicketsResult) {
-                error_log("Tickets deleted successfully where cabinet_id was not 0.");
-            } else {
-                error_log("Error deleting tickets where cabinet_id was not 0: " . db_error());
-            }
+                
+                $deleteTicketsQuery = "DELETE FROM " . TABLE_PREFIX . "ticket WHERE ticket_id = $ticketId";
+                $deleteTicketsResult = db_query($deleteTicketsQuery);
+                
+                $deleteFormEntryQuery = "DELETE fe, fev FROM " . TABLE_PREFIX . "form_entry fe INNER JOIN " . TABLE_PREFIX . "form_entry_values fev "
+                        . "ON fe.id = fev.entry_id "
+                        . "WHERE fe.object_type = 'T' AND fe.object_id = $ticketId";
+                $deleteFormEntryResult = db_query($deleteFormEntryQuery); //DONE 
+                
+                $deleteThreadQuery = "DELETE FROM " . TABLE_PREFIX . "thread WHERE id = $ticketId";
+                $deleteThreadResult = db_query($deleteThreadQuery); //DONE 
+                
+                $deleteThreadEntryQuery = "DELETE FROM " . TABLE_PREFIX . "thread_entry WHERE id = $ticketId";
+                $deleteThreadEntryResult = db_query($deleteThreadEntryQuery); //DONE 
+                
+                $deleteThreadEventQuery = "DELETE FROM " . TABLE_PREFIX . "thread_event WHERE id = $ticketId OR thread_id = $ticketId";
+                $deleteThreadEventResult = db_query($deleteThreadEventQuery);
+                
+                $deleteSearchQuery = "DELETE FROM " . TABLE_PREFIX . "_search WHERE (object_type = 'T' OR object_type = 'H') AND object_id = $ticketId";
+                $deleteSearchResult = db_query($deleteSearchQuery); //DONE 
+                
+                if (!$deleteCdataResult && !$deleteTicketsResult && !$deleteFormEntryResult  && !$deleteThreadResult 
+                        && !$deleteThreadEntryResult && !$deleteThreadEventResult && !$deleteSearchResult) {
+                    error_log("Error deleting tickets");
+                } 
+            } 
         } else {
             error_log("Error fetching ticket IDs from " . TABLE_PREFIX . "ticket: " . db_error());
         }
@@ -591,11 +603,20 @@ class FormsPlugin extends Plugin {
         $mysqlDumpPath = 'C:/xampp/mysql/bin/mysqldump.exe';
         $backupDir = INCLUDE_DIR . "plugins/forms_plugin/mysqldump/";
 
-        $backupCommand = "$mysqlDumpPath -h $dbHost -u $dbUser -p$dbPass $dbName " . TABLE_PREFIX . "ticket__cdata " . TABLE_PREFIX . "ticket > \"" . $backupDir . "combined_backup.sql\"";
+        $backupCommand = "$mysqlDumpPath -h $dbHost -u $dbUser -p$dbPass $dbName "
+                . TABLE_PREFIX . "ticket__cdata " 
+                . TABLE_PREFIX . "ticket "
+                . TABLE_PREFIX . "form_entry "
+                . TABLE_PREFIX . "form_entry_values "    
+                . TABLE_PREFIX . "thread "    
+                . TABLE_PREFIX . "thread_entry " 
+                . TABLE_PREFIX . "thread_event " 
+                . TABLE_PREFIX . "_search " 
+                . "> \"" . $backupDir . "combined_backup.sql\"";
         system($backupCommand, $result);
 
         if ($result == 0) {
-            error_log("Backup files for " . TABLE_PREFIX . "ticket and " . TABLE_PREFIX . "ticket__cdata created successfully.");
+            error_log("Backup file created successfully.");
         } else {
             error_log("Error occurred during the backup creation. Error code: $result");
         }
