@@ -17,87 +17,22 @@ class FormsPlugin extends Plugin {
         Signal::connect('model.deleted', array($this, 'addOrDeleteColumnsFromTable')); 
     }
     
-    
     function restoreOrReplaceFiles() {
-        $this->restoreOrReplaceTicketOpenFile();
-        $this->restoreOrReplaceTicketViewFile();
-        $this->applyPatchOrRestoreClassTicketFile();
-        $this->restoreOrReplaceOpenFile();
-        $this->restoreOrReplacePluginsFile();
-    }
-    
-    function restoreOrReplaceTicketOpenFile() {
         if($this->isPluginActive()) {
             if(!$this->doesColumnExist()) {
                 $this->replaceTicketOpenFile();
-            }
-        }
-        else {
-            if($this->doesColumnExist()) {
-                $this->restoreTicketOpenFile();
-            }
-        }
-    }
-    
-    function restoreOrReplaceTicketViewFile() {
-        if($this->isPluginActive()) {
-            if(!$this->doesColumnExist()) {
                 $this->replaceTicketViewFile();
-            }
-        }
-        else {
-            if($this->doesColumnExist()) {
-                $this->restoreTicketViewFile();
-            }
-        }
-    }
-    
-    function restoreOrReplaceClassTicketFile() {
-        if($this->isPluginActive()) {
-            if(!$this->doesColumnExist()) {
-                $this->replaceClassTicketFile();
-            }
-        }
-        else {
-            if($this->doesColumnExist()) {
-                $this->restoreClassTicketFile();
-            }
-        }
-    }
-    
-    function applyPatchOrRestoreClassTicketFile() {
-        if($this->isPluginActive()) {
-            if(!$this->doesColumnExist()) {
                 $this->applyPatchToClassTicketFile();
-            }
-        } else {
-            if($this->doesColumnExist()) {
-                $this->restoreClassTicketFile();
-            }
-        }
-    }
-    
-    function restoreOrReplaceOpenFile() {
-        if($this->isPluginActive()) {
-            if(!$this->doesColumnExist()) {
                 $this->replaceOpenFile();
-            }
-        }
-        else {
-            if($this->doesColumnExist()) {
-                $this->restoreOpenFile();
-            }
-        }
-    }
-    
-    function restoreOrReplacePluginsFile() {
-        if($this->isPluginActive()) {
-            if(!$this->doesColumnExist()) {
                 $this->replacePluginFile();
             }
         }
         else {
             if($this->doesColumnExist()) {
+                $this->restoreTicketOpenFile();
+                $this->restoreTicketViewFile();
+                $this->restoreClassTicketFile();
+                $this->restoreOpenFile();
                 $this->restorePluginFile();
             }
         }
@@ -115,7 +50,23 @@ class FormsPlugin extends Plugin {
             }
         }
     }
+        
+    function addOrDeleteColumnsFromTable() {
+        if($this->isPluginActive()) {
+            if(!$this->doesColumnExist()) {
+                $this->addColumnsToTable();
+                $this->copyBackupIfExists();
+            }
+        }
+        else {
+            if($this->doesColumnExist()) {
+                $this->deleteLinesFromTable();
+                $this->deleteColumnsFromTable();
+            }
+        }
+    }
     
+    //REPLACE AND PATCH______________________________________________________________________________________
     function replaceTicketOpenFile() {
         $this->replaceFile(INCLUDE_DIR . 'staff/ticket-open.inc.php', 'ticket-open-modified.inc.php');
     }
@@ -158,7 +109,9 @@ class FormsPlugin extends Plugin {
     function replacePluginFile() {
         $this->replaceFile(INCLUDE_DIR . 'staff/plugins.inc.php', 'plugins-modified.inc.php');
     }
-    
+    //____________________________________________________________________________________________________________
+
+    //RESTORE_____________________________________________________________________________________________________
     function restoreTicketOpenFile() {
         $this->restoreFile(INCLUDE_DIR . 'staff/ticket-open.inc.php', 'ticket-open-backup.inc.php');
     }
@@ -178,7 +131,9 @@ class FormsPlugin extends Plugin {
     function restorePluginFile() {
         $this->restoreFile(INCLUDE_DIR . 'staff/plugins.inc.php', 'plugins-backup.inc.php');
     }
+    //____________________________________________________________________________________________________________
     
+    //MOVE FILES_____________________________________________________________________________________________________
     function moveToNewDirectory() {
         $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/endpoints/get_addresses.php', SCP_DIR . 'get_addresses.php');
         $this->moveFileToDirectory(INCLUDE_DIR . 'plugins/forms_plugin/endpoints/get_cabinets.php', SCP_DIR . 'get_cabinets.php');
@@ -192,8 +147,9 @@ class FormsPlugin extends Plugin {
         $this->moveFileToDirectory(SCP_DIR . 'get_checkbox_values.php', INCLUDE_DIR . 'plugins/forms_plugin/endpoints/get_checkbox_values.php');
         $this->moveFileToDirectory(SCP_DIR . 'erase_data.php', INCLUDE_DIR . 'plugins/forms_plugin/endpoints/erase_data.php');
     }
+    //_____________________________________________________________________________________________________________________
     
-    
+    //REPLACE,RESTORE,MOVE AND PATCH FUNCTIONS______________________________________________________________________________
     function replaceFile($file_path, $modified_file_name) {
         $modified_file_path = __DIR__ . '\modified_files' . '/' . $modified_file_name;
         
@@ -266,22 +222,9 @@ class FormsPlugin extends Plugin {
             return "Failed to move the file.";
         }
     }
+    //_____________________________________________________________________________________________________________________
     
-    function addOrDeleteColumnsFromTable() {
-        if($this->isPluginActive()) {
-            if(!$this->doesColumnExist()) {
-                $this->addColumnsToTable();
-                $this->copyBackupIfExists();
-            }
-        }
-        else {
-            if($this->doesColumnExist()) {
-                $this->deleteLinesFromTable();
-                $this->deleteColumnsFromTable();
-            }
-        }
-    }
-    
+    //GET INFO OF ANSR FUNCTIONS___________________________________________________________________________________________
     static function getDistricts($address) {
         if(!$address) {
             $query = "SELECT DISTINCT district FROM sincro_cabinet";
@@ -349,13 +292,8 @@ class FormsPlugin extends Plugin {
     }
     
     static function getEquipments($pk,$c_d) {
-        $cabinId = "";
-        $cinemometerId = "";
-        $routerId = "";
-        $upsId = "";
         $result = [];
         
-        //PODE SE TROCAR PELO CODIGO DAS FUNÇOES ABAIXO
         $cabinIdQuery = "SELECT id, model, suplier FROM SINCRO_Cabinet WHERE pk = '$pk' AND c_d = '$c_d'";
         $cabinIdresult = db_query($cabinIdQuery);
         if ($cabinIdresult) {
@@ -365,50 +303,13 @@ class FormsPlugin extends Plugin {
             }  
         }
         
-        $cinemometerIdQuery = "SELECT idCinemometer FROM SINCRO_Cabinet_has_Cinemometer WHERE idCabin = '$cabinId'";
-        $cinemometerIdResult = db_query($cinemometerIdQuery);
-        if ($cinemometerIdResult) {
-            $row = db_fetch_array($cinemometerIdResult);
-            $cinemometerId = $row['idCinemometer']; 
-        }
+        $cinemometerId = self::getCinemometerId($cabinId); 
+        $routerId = self::getRouterId($cabinId);
+        $upsId = self::getUpsId($cabinId);
         
-        $routerIdQuery = "SELECT idRouter FROM SINCRO_Cabinet_has_Router WHERE idCabin = '$cabinId'";
-        $routerIdResult = db_query($routerIdQuery);
-        if ($routerIdResult) {
-            $row = db_fetch_array($routerIdResult);
-            $routerId = $row['idRouter']; 
-        }
-
-        $upsIdQuery = "SELECT id_ups FROM SINCRO_Cabinet WHERE id = '$cabinId'";
-        $upsIdresult = db_query($upsIdQuery);
-        if ($upsIdresult) {
-            $row = db_fetch_array($upsIdresult);
-            $upsId = $row['id_ups']; 
-        }
-        
-        $cinemometerInfoQuery = "SELECT model, suplier FROM SINCRO_Cinemometer WHERE id = '$cinemometerId'";
-        $cinemometerInfoResult = db_query($cinemometerInfoQuery);
-        if ($cinemometerInfoResult) {
-            while ($row = db_fetch_array($cinemometerInfoResult)) {
-                    $result[] = $row['suplier'] . " " . $row['model'];
-            }
-        }
-        
-        $routerInfoQuery = "SELECT model, suplier, serial_number FROM SINCRO_Router WHERE id = '$routerId'";
-        $routerInfoResult = db_query($routerInfoQuery);
-        if ($routerInfoResult) {
-            while ($row = db_fetch_array($routerInfoResult)) {
-                    $result[] = $row['suplier'] . " " . $row['model'];
-            }
-        }
-        
-        $upsInfoQuery = "SELECT model, suplier, serial_number FROM SINCRO_UPS WHERE id = '$upsId'";
-        $upsInfoResult = db_query($upsInfoQuery);
-        if ($upsInfoResult) {
-            while ($row = db_fetch_array($upsInfoResult)) {
-                    $result[] = $row['suplier'] . " " . $row['model'];
-            }
-        }
+        $result[] = self::getCinemometerInfo($cinemometerId);
+        $result[] = self::getRouterInfo($routerId);
+        $result[] = self::getUpsInfo($upsId);
         
         return $result;
     }
@@ -518,7 +419,9 @@ class FormsPlugin extends Plugin {
             return $row['address']; 
         }
     }
+    //_____________________________________________________________________________________________________________________
     
+    //AUXILIARY FUNCTIONS__________________________________________________________________________________________________
     function isPluginActive() {
         $query = "SELECT isactive FROM " . TABLE_PREFIX . "plugin WHERE name = 'Forms Plugin'"; 
 
@@ -533,6 +436,22 @@ class FormsPlugin extends Plugin {
         }
     }
     
+    function doesColumnExist() {
+        $query = "SHOW COLUMNS FROM " . TABLE_PREFIX . "ticket LIKE 'cabinet_id'";
+
+        $result = db_query($query);
+
+        if ($result) {
+            $rowCount = db_num_rows($result);
+            return ($rowCount > 0); 
+        } else {
+            error_log("Error checking column existence in table " . TABLE_PREFIX . "ticket");
+            return false;
+        }
+    }
+    //_____________________________________________________________________________________________________________________
+    
+    //DATABASE AND BACKUP FUNCTIONS________________________________________________________________________________________
     function addColumnsToTable() {
         $columns = array(
             'cabinet_id' => "INT DEFAULT NULL",
@@ -556,21 +475,7 @@ class FormsPlugin extends Plugin {
             }
         }
     }
-    
-    function doesColumnExist() {
-        $query = "SHOW COLUMNS FROM " . TABLE_PREFIX . "ticket LIKE 'cabinet_id'";
 
-        $result = db_query($query);
-
-        if ($result) {
-            $rowCount = db_num_rows($result);
-            return ($rowCount > 0); 
-        } else {
-            error_log("Error checking column existence in table " . TABLE_PREFIX . "ticket");
-            return false;
-        }
-    }
-    
     function deleteLinesFromTable() { 
         $ticketIdsQuery = "SELECT ticket_id FROM " . TABLE_PREFIX . "ticket WHERE cabinet_id != 0";
         $ticketIdsResult = db_query($ticketIdsQuery);
@@ -693,7 +598,9 @@ class FormsPlugin extends Plugin {
             error_log("Error occurred during the backup creation. Error code: $result");
         }
     }
+    //_____________________________________________________________________________________________________________________
     
+    //PATCHES VARIABLES____________________________________________________________________________________________________
     public $classTicketPatch1 = '            return \'separate\';
         else
             return \'visual\';
@@ -846,6 +753,7 @@ class FormsPlugin extends Plugin {
         }
         //________________________________________________________________________________
     '; 
+    //_____________________________________________________________________________________________________________________
 }
 $forms_plugin = new FormsPlugin();
 $forms_plugin->bootstrap();
