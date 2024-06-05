@@ -667,6 +667,13 @@ class FormsPlugin extends Plugin {
         $dbName = DBNAME; 
         $mysqlDumpPath = 'C:/xampp/mysql/bin/mysqldump.exe';
         $backupDir = INCLUDE_DIR . "plugins/forms_plugin/mysqldump/";
+        
+        if (!file_exists($backupDir)) {
+            if (!mkdir($backupDir, 0777, true)) {
+                error_log("Failed to create backup directory: " . $backupDir);
+                return;
+            }
+        }
 
         $backupCommand = "$mysqlDumpPath -h $dbHost -u $dbUser -p$dbPass $dbName "
                 . TABLE_PREFIX . "ticket__cdata " 
