@@ -21,7 +21,7 @@ class FormsPlugin extends Plugin {
     function restoreOrReplaceFiles() {
         $this->restoreOrReplaceTicketOpenFile();
         $this->restoreOrReplaceTicketViewFile();
-        $this->restoreOrReplaceClassTicketFile();
+        $this->applyPatchOrRestoreClassTicketFile();
         $this->restoreOrReplaceOpenFile();
         $this->restoreOrReplacePluginsFile();
     }
@@ -59,6 +59,18 @@ class FormsPlugin extends Plugin {
             }
         }
         else {
+            if($this->doesColumnExist()) {
+                $this->restoreClassTicketFile();
+            }
+        }
+    }
+    
+    function applyPatchOrRestoreClassTicketFile() {
+        if($this->isPluginActive()) {
+            if(!$this->doesColumnExist()) {
+                $this->applyPatchToClassTicketFile();
+            }
+        } else {
             if($this->doesColumnExist()) {
                 $this->restoreClassTicketFile();
             }
@@ -112,8 +124,31 @@ class FormsPlugin extends Plugin {
         $this->replaceFile(INCLUDE_DIR . 'staff/ticket-view.inc.php', 'ticket-view-modified.inc.php');
     }
     
-    function replaceClassTicketFile() {
-        $this->replaceFile(INCLUDE_DIR . 'class.ticket.php', 'class.ticket-modified.php');
+    function applyPatchToClassTicketFile() {
+        $this->insertCodeIntoFile(
+            INCLUDE_DIR . 'class.ticket.php', 
+            $this->classTicketPatch1, 
+            'if ($this->hasFlag(self::FLAG_SEPARATE_THREADS))', 
+            '    function isMerged() {'
+        );
+        $this->insertCodeIntoFile(
+            INCLUDE_DIR . 'class.ticket.php', 
+            $this->classTicketPatch2, 
+            'switch ($fid) {', 
+            '        case \'priority\':'
+        );
+        $this->insertCodeIntoFile(
+            INCLUDE_DIR . 'class.ticket.php', 
+            $this->classTicketPatch3, 
+            '$fields[\'duedate\']  = array(\'type\'=>\'date\', \'required\'=>0, \'error\'=>__(\'Invalid date format - must be MM/DD/YY\'));', 
+            '            case \'api\':'
+        );
+        $this->insertCodeIntoFile(
+            INCLUDE_DIR . 'class.ticket.php', 
+            $this->classTicketPatch4, 
+            'Misc::dbtime($vars[\'duedate\']));', 
+            '        if (!$ticket->save())'
+        );
     }    
     
     function replaceOpenFile() {
@@ -188,6 +223,36 @@ class FormsPlugin extends Plugin {
         } else {
             error_log("Backup file for $file_path does not exist!");
         }
+    }
+    
+     function insertCodeIntoFile($filePath, $newCode, $startPoint, $endPoint) {
+        $fileContent = file_get_contents($filePath);
+        if ($fileContent === false) {
+            throw new Exception("Failed to read file at $filePath");
+        }
+
+        $startPos = strpos($fileContent, $startPoint);
+        if ($startPos === false) {
+            throw new Exception("Start point '$startPoint' not found in file $filePath");
+        }
+
+        $endPos = strpos($fileContent, $endPoint, $startPos);
+        if ($endPos === false) {
+            throw new Exception("End point '$endPoint' not found in file $filePath");
+        }
+
+        $startPointEnd = $startPos + strlen($startPoint);
+        $endPointStart = $endPos;
+
+        $updatedContent = substr($fileContent, 0, $startPointEnd) 
+            . "\n" . $newCode . "\n"                             
+            . substr($fileContent, $endPointStart);              
+
+        if (file_put_contents($filePath, $updatedContent) === false) {
+            throw new Exception("Failed to write updated content to file $filePath");
+        }
+
+        return true;
     }
     
     function moveFileToDirectory($source, $destination) {
@@ -621,6 +686,159 @@ class FormsPlugin extends Plugin {
             error_log("Error occurred during the backup creation. Error code: $result");
         }
     }
+    
+    public $classTicketPatch1 = '            return \'separate\';
+        else
+            return \'visual\';
+        return \'visual\';
+    }
+
+    //GETTERS FORMS PLUGIN_____________________________________________________
+    function getCabinetId(){
+        return $this->cabinet_id;
+    }
+
+    function getCinemoterId(){
+        return $this->cinemometer_id;
+    }
+
+    function getUpsId(){
+        return $this->ups_id;
+    }
+
+    function getRouterId(){
+        return $this->router_id;
+    }
+
+    function getDistrict() {
+        return FormsPlugin::getDistrict($this->getCabinetId());
+    }
+
+    function getAddress() {
+        return FormsPlugin::getAddress($this->getCabinetId());
+    }
+
+    function getCabinetInfo() {
+        return FormsPlugin::getCabinInfo($this->getCabinetId());
+    }
+
+    function isCabinBroken() {
+        return $this->cabinet_is_broken;
+    }    
+
+    function getCinemometerInfo() {
+        return FormsPlugin::getCinemometerInfo($this->getCinemoterId());
+    }
+
+    function isCinemometerBroken() {
+        return $this->cinemometer_is_broken;
+    }
+
+    function getUpsInfo() {
+        return FormsPlugin::getUpsInfo($this->getUpsId());
+    }
+
+    function isUpsBroken() {
+        return $this->ups_is_broken;
+    }
+
+    function getRouterInfo() {
+        return FormsPlugin::getRouterInfo($this->getRouterId());
+    }
+
+    function isRouterBroken() {
+        return $this->router_is_broken;
+    }
+    function isOtherBroken() {
+        return $this->other_is_broken;
+    }
+    //__________________________________________________________________________
+    ';
+    
+    public $classTicketPatch2 = '        //NEW FIELDS FOR BROKEN EQUIPMENTS_____________________________________
+        case \'brokenCabin\':
+            return ChoiceField::init(array(
+                        \'id\' => $fid,
+                        \'name\' => \'cabinet_is_broken\',
+                        \'label\' => __(\'Cabin\'),
+                        \'default\' => $this->isCabinBroken(),
+                        \'choices\' => array("Não"=>"Não","Sim"=>"Sim")
+                        ));
+            break;
+        case \'brokenCinemometer\':
+            return ChoiceField::init(array(
+                        \'id\' => $fid,
+                        \'name\' => \'cinemometer_is_broken\',
+                        \'label\' => __(\'Cinemometer\'),
+                        \'default\' => $this->isCinemometerBroken(),
+                        \'choices\' => array("Não"=>"Não","Sim"=>"Sim")
+                        ));
+            break;
+        case \'brokenRouter\':
+            return ChoiceField::init(array(
+                        \'id\' => $fid,
+                        \'name\' => \'router_is_broken\',
+                        \'label\' => __(\'Router\'),
+                        \'default\' => $this->isRouterBroken(),
+                        \'choices\' => array("Não"=>"Não","Sim"=>"Sim")
+                        ));
+            break;
+        case \'brokenUps\':
+            return ChoiceField::init(array(
+                        \'id\' => $fid,
+                        \'name\' => \'ups_is_broken\',
+                        \'label\' => __(\'UPS\'),
+                        \'default\' => $this->isUpsBroken(),
+                        \'choices\' => array("Não"=>"Não","Sim"=>"Sim")
+                        ));
+            break;
+        case \'brokenOther\':
+            return ChoiceField::init(array(
+                        \'id\' => $fid,
+                        \'name\' => \'other_is_broken\',
+                        \'label\' => __(\'Other\'),
+                        \'default\' => $this->isOtherBroken(),
+                        \'choices\' => array("Não"=>"Não","Sim"=>"Sim")
+                        ));
+            break;
+        //____________________________________________________________________
+    ';
+    
+    public $classTicketPatch3 = '                //REQUIRED FIELDS FORMS PLUGIN__________________________________________________________________________________________
+                $fields[\'district_option\']  = array(\'type\'=>\'string\',  \'required\'=>1, \'error\'=>__(\'District selection is required\'));
+                $fields[\'address_option\']  = array(\'type\'=>\'string\',  \'required\'=>1, \'error\'=>__(\'Address selection is required\'));
+                $fields[\'place_option\']  = array(\'type\'=>\'string\',  \'required\'=>1, \'error\'=>__(\'Place selection is required\'));
+                //______________________________________________________________________________________________________________________
+    ';
+    
+    public $classTicketPatch4 = '        //SAVE VALUES OF NEW FORMS ELEMENTS TO DATABASE__________________________________
+        if (isset($vars[\'place_option\'])) {
+            preg_match(\'/km\s+([\d.]+)/\', $vars[\'place_option\'], $matches);
+            $pk = "km " . $matches[1];
+            preg_match(\'/\b([A-Za-z])\b/\', $vars[\'place_option\'], $matches);
+            $c_d = $matches[1];
+            
+            foreach ($vars[\'checkbox_name\'] as $string) {
+                if (strpos($string, \'Cabine\') !== false) {
+                    $ticket->cabinet_is_broken = \'Sim\';
+                } else if (strpos($string, \'Cinemómetro\') !== false) {
+                    $ticket->cinemometer_is_broken = \'Sim\';
+                } else if (strpos($string, \'Router\') !== false) {
+                    $ticket->router_is_broken = \'Sim\';
+                } else if (strpos($string, \'UPS\') !== false) {
+                    $ticket->ups_is_broken = \'Sim\';
+                } else if (strpos($string, \'Outro\') !== false) {
+                    $ticket->other_is_broken = \'Sim\';
+                }
+            }
+            
+            $ticket->cabinet_id = FormsPlugin::getCabinetId($pk, $c_d);
+            $ticket->cinemometer_id = FormsPlugin::getCinemometerId($ticket->cabinet_id);
+            $ticket->ups_id = FormsPlugin::getUpsId($ticket->cabinet_id);
+            $ticket->router_id = FormsPlugin::getRouterId($ticket->cabinet_id);
+        }
+        //________________________________________________________________________________
+    '; 
 }
 $forms_plugin = new FormsPlugin();
 $forms_plugin->bootstrap();
