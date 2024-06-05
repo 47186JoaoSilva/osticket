@@ -345,65 +345,6 @@ if ($_POST)
                 </select>&nbsp;<span class='error'>&nbsp;<?php echo $errors['assignId']; ?></span>
             </td>
         </tr>
-        <tr>
-            <td width="160" class="required"><?php echo __('Text box');?>:</td>
-            <td>
-                <input type="text" name="textbox_name" value="<?php echo htmlspecialchars($info['textbox_name']); ?>">
-                &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['textbox_name']; ?></font>
-            </td>
-        </tr>
-        <tr>
-            <td width="160"><?php echo __('Combo Box');?>:</td>
-            <td>
-                <select name="combo_option">
-                    <option value="option1" <?php if ($info['combo_option'] === "option1") echo "selected"; ?>>Option 1</option>
-                    <option value="option2" <?php if ($info['combo_option'] === "option2") echo "selected"; ?>>Option 2</option>
-                    <option value="option3" <?php if ($info['combo_option'] === "option3") echo "selected"; ?>>Option 3</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <td width="160"><?php echo __('Radio Button');?>:</td>
-            <td>
-                <label>
-                    <input type="radio" name="radio_option" value="option1">
-                    Option 1
-                </label>
-                <label>
-                    <input type="radio" name="radio_option" value="option2">
-                    Option 2
-                </label>
-                <label>
-                    <input type="radio" name="radio_option" value="option3">
-                    Option 3
-                </label>
-            </td>
-        </tr>
-        <tr>
-            <td width="160" class="required">
-                <?php echo __('Numeric Input'); ?>:
-            </td>
-            <td>
-                <input type="number" name="numeric_input" value="<?php echo htmlspecialchars($info['numeric_input']); ?>">
-                &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['numeric_input']; ?></font>
-            </td>
-        </tr>
-        <tr>
-            <td width="160" class="required"><?php echo __('Email');?>:</td>
-            <td>
-                <input type="email" name="email_input" value="<?php echo htmlspecialchars($info['email_input']); ?>">
-                &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['email_input']; ?></font>
-            </td>
-        </tr>
-        <tr>
-            <td width="160"><?php echo __('Checkbox');?>:</td>
-            <td>
-                <label>
-                    <input type="checkbox" name="checkbox_option" value="Checkbox Option">
-                    Checkbox Option
-                </label>
-            </td>
-        </tr>
         <?php } ?>
         </tbody>
         <tbody id="dynamic-form">

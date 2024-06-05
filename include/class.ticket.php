@@ -230,30 +230,6 @@ implements RestrictedAccess, Threadable, Searchable {
         }
         return $this->_answers;
     }
-    
-    function getTextboxname() {
-        return $this->textbox_name;
-    }
-    
-    function getComboboxValue() {
-        return $this->combo_option;
-    }
-    
-    function getRadioButtonValue(){
-        return $this->radio_option;
-    }
-    
-    function getNumericValue(){
-        return $this->numeric_input;
-    }
-    
-    function getEmailValue(){
-        return $this->email_input;
-    }
-    
-    function getCheckboxValue(){
-        return $this->checkbox_option;
-    }
 
     function getAnswer($field, $form=null) {
         // TODO: Prefer CDATA ORM relationship if already loaded
@@ -1392,11 +1368,6 @@ implements RestrictedAccess, Threadable, Searchable {
 
 
     /* -------------------- Setters --------------------- */
-    public function setTextboxName($textboxName) {
-        $this->textbox_name = $textboxName;
-        return $this->save();
-    }
-    
     public function setFlag($flag, $val) {
 
         if ($val)
@@ -4143,9 +4114,6 @@ implements RestrictedAccess, Threadable, Searchable {
                 $fields['deptId']   = array('type'=>'int',  'required'=>0, 'error'=>__('Department selection is required'));
                 $fields['topicId']  = array('type'=>'int',  'required'=>1, 'error'=>__('Help topic selection is required'));
                 $fields['duedate']  = array('type'=>'date', 'required'=>0, 'error'=>__('Invalid date format - must be MM/DD/YY'));
-                $fields['textbox_name']  = array('type'=>'string',  'required'=>1, 'error'=>__('Textbox input is a required field'));
-                $fields['numeric_input']  = array('type'=>'int',  'required'=>1, 'error'=>__('Numeric input is a required field'));
-                $fields['email_input']  = array('type'=>'string',  'required'=>1, 'error'=>__('Email input is a required field'));
             case 'api':
                 $fields['source']   = array('type'=>'string', 'required'=>1, 'error'=>__('Indicate ticket source'));
                 break;
@@ -4387,9 +4355,6 @@ implements RestrictedAccess, Threadable, Searchable {
 
         //We are ready son...hold on to the rails.
         $number = $topic ? $topic->getNewTicketNumber() : $cfg->getNewTicketNumber();
-        
-        $textbox_name = isset($vars['textbox_name']) ? $vars['textbox_name'] : "";
-        
         $ticket = new static(array(
             'created' => SqlFunction::NOW(),
             'lastupdate' => SqlFunction::NOW(),
@@ -4399,12 +4364,6 @@ implements RestrictedAccess, Threadable, Searchable {
             'topic_id' => $topicId,
             'ip_address' => $ipaddress,
             'source' => $source,
-            'textbox_name' => $textbox_name,
-            'combo_option' => $combo_option,
-            'radio_option' => $radio_option,
-            'numeric_input' => $numeric_input,
-            'email_input' => $email_input,
-            'checkbox_option' => $checkbox_option,
         ));
 
         if (isset($vars['emailId']) && $vars['emailId'])
@@ -4415,30 +4374,7 @@ implements RestrictedAccess, Threadable, Searchable {
             $ticket->duedate = date('Y-m-d G:i',
                 Misc::dbtime($vars['duedate']));
 
-        if (isset($vars['textbox_name'])) {
-            $ticket->textbox_name = $vars['textbox_name'];
-        }
-        
-        if (isset($vars['combo_option'])) {
-            $ticket->combo_option = $vars['combo_option'];
-        }
-        
-        if (isset($vars['radio_option'])) {
-            $ticket->radio_option = $vars['radio_option'];
-        }
-        
-        if (isset($vars['numeric_input'])) {
-            $ticket->numeric_input = $vars['numeric_input'];
-        }
-        
-        if (isset($vars['email_input'])) {
-            $ticket->email_input = $vars['email_input'];
-        }
-        
-        if (isset($vars['checkbox_option'])) {
-            $ticket->checkbox_option = $vars['checkbox_option'];
-        }
-        
+
         if (!$ticket->save())
             return null;
         if (!($thread = TicketThread::create($ticket->getId())))
