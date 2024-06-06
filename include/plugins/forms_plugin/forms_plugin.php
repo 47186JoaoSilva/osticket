@@ -57,6 +57,7 @@ class FormsPlugin extends Plugin {
                 $this->addColumnsToTable();
                 $this->copyBackupIfExists();
             }
+            $this->createBackupTables();
         }
         else {
             if($this->doesColumnExist()) {
