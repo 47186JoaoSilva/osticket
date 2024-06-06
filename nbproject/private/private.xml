@@ -3,15 +3,9 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/xampp/htdocs/osticket/include/class.forms.php</file>
-            <file>file:/C:/xampp/htdocs/osticket/include/plugins/forms_plugin/forms_plugin.php</file>
-            <file>file:/C:/xampp/htdocs/osticket/scp/tickets.php</file>
-            <file>file:/C:/xampp/htdocs/osticket/include/class.format.php</file>
-            <file>file:/C:/xampp/htdocs/osticket/include/plugins/forms_plugin/ticket-open-modified.inc.php</file>
-            <file>file:/C:/xampp/htdocs/osticket/include/staff/ticket-view.inc.php</file>
+            <file>file:/C:/xampp/htdocs/osticket/include/plugins/sla_plugin/sla_plugin.php</file>
+            <file>file:/C:/xampp/htdocs/osticket/include/ajax.tickets.php</file>
             <file>file:/C:/xampp/htdocs/osticket/include/class.ticket.php</file>
-            <file>file:/C:/xampp/htdocs/osticket/include/plugins/forms_plugin/plugin.php</file>
-            <file>file:/C:/xampp/htdocs/osticket/include/staff/ticket-open.inc.php</file>
         </group>
     </open-files>
 </project-private>
