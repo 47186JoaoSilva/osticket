@@ -153,7 +153,7 @@ if ($count) //Show options..
 <script>
     function handleCheckbox() {
         var checkbox = document.getElementById("eraseDataCheckbox");
-        if (checkbox.checked) {
+        if (!checkbox.checked) {
             var xmlhttp = new XMLHttpRequest();
             xmlhttp.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
