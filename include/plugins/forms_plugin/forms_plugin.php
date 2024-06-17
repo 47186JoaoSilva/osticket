@@ -69,34 +69,42 @@ class FormsPlugin extends Plugin {
     
     //REPLACE AND PATCH______________________________________________________________________________________
     function replaceTicketOpenFile() {
-        $this->replaceFile(INCLUDE_DIR . 'staff/ticket-open.inc.php', 'ticket-open-modified.inc.php');
+        $this->replaceFile(INCLUDE_DIR . 'staff/ticket-open.inc.php', 'ticket-open-modified.inc.php', 'ticket-open-backup.inc.php');
     }
     
     function replaceTicketViewFile() {
-        $this->replaceFile(INCLUDE_DIR . 'staff/ticket-view.inc.php', 'ticket-view-modified.inc.php');
+        $this->replaceFile(INCLUDE_DIR . 'staff/ticket-view.inc.php', 'ticket-view-modified.inc.php', 'ticket-view-backup.inc.php');
     }
     
     function applyPatchToClassTicketFile() {
+        $file_path = INCLUDE_DIR . 'class.ticket.php';
+        $backup_file_path = __DIR__ . '\backup_files' . '/class.ticket-backup.php';
+        
+        // Copy the original file to the backup directory
+        if (!copy($file_path, $backup_file_path)) {
+            error_log("Failed to create backup of $file_path at $backup_file_path!");
+        }
+        
         $this->insertCodeIntoFile(
-            INCLUDE_DIR . 'class.ticket.php', 
+            $file_path, 
             $this->classTicketPatch1, 
             'if ($this->hasFlag(self::FLAG_SEPARATE_THREADS))', 
             '    function isMerged() {'
         );
         $this->insertCodeIntoFile(
-            INCLUDE_DIR . 'class.ticket.php', 
+            $file_path, 
             $this->classTicketPatch2, 
             'switch ($fid) {', 
             '        case \'priority\':'
         );
         $this->insertCodeIntoFile(
-            INCLUDE_DIR . 'class.ticket.php', 
+            $file_path, 
             $this->classTicketPatch3, 
             '$fields[\'duedate\']  = array(\'type\'=>\'date\', \'required\'=>0, \'error\'=>__(\'Invalid date format - must be MM/DD/YY\'));', 
             '            case \'api\':'
         );
         $this->insertCodeIntoFile(
-            INCLUDE_DIR . 'class.ticket.php', 
+            $file_path, 
             $this->classTicketPatch4, 
             'Misc::dbtime($vars[\'duedate\']));', 
             '        if (!$ticket->save())'
@@ -104,11 +112,11 @@ class FormsPlugin extends Plugin {
     }    
     
     function replaceOpenFile() {
-        $this->replaceFile(INCLUDE_DIR . 'client/open.inc.php', 'open-modified.inc.php');
+        $this->replaceFile(INCLUDE_DIR . 'client/open.inc.php', 'open-modified.inc.php', 'open-backup.inc.php');
     }
     
     function replacePluginFile() {
-        $this->replaceFile(INCLUDE_DIR . 'staff/plugins.inc.php', 'plugins-modified.inc.php');
+        $this->replaceFile(INCLUDE_DIR . 'staff/plugins.inc.php', 'plugins-modified.inc.php', 'plugins-backup.inc.php');
     }
     //____________________________________________________________________________________________________________
 
@@ -151,14 +159,24 @@ class FormsPlugin extends Plugin {
     //_____________________________________________________________________________________________________________________
     
     //REPLACE,RESTORE,MOVE AND PATCH FUNCTIONS______________________________________________________________________________
-    function replaceFile($file_path, $modified_file_name) {
+    function replaceFile($file_path, $modified_file_name, $backup_file_name) {
         $modified_file_path = __DIR__ . '\modified_files' . '/' . $modified_file_name;
-        
+        $backup_file_path = __DIR__ . '\backup_files' . '/' . $backup_file_name;
+
         if (file_exists($file_path) && file_exists($modified_file_path)) {
             $modified_content = file_get_contents($modified_file_path);
-            
-            //Copiar o ficheiro original para o backup
-            
+
+            // Create the backup directory if it doesn't exist
+            if (!is_dir(__DIR__ . '\backup_files')) {
+                mkdir(__DIR__ . '\backup_files', 0755, true);
+            }
+
+            // Copy the original file to the backup directory
+            if (!copy($file_path, $backup_file_path)) {
+                error_log("Failed to create backup of $file_path at $backup_file_path!");
+            }
+
+            // Replace the original file with the modified content
             file_put_contents($file_path, $modified_content);
         } else {
             if (!file_exists($file_path)) {
@@ -170,19 +188,19 @@ class FormsPlugin extends Plugin {
         }
     }
     
-    function restoreFile($file_path,$backup_path) {
+    function restoreFile($file_path, $backup_path) {
         $backup_file_path = __DIR__ . '\backup_files' . '/' . basename($backup_path);
         
         if (file_exists($backup_file_path)) {
             copy($backup_file_path, $file_path);
             // Delete the backup file after restoring
-            //unlink($backup_file_path);
+            unlink($backup_file_path);
         } else {
             error_log("Backup file for $file_path does not exist!");
         }
     }
     
-     function insertCodeIntoFile($filePath, $newCode, $startPoint, $endPoint) {
+    function insertCodeIntoFile($filePath, $newCode, $startPoint, $endPoint) {       
         $fileContent = file_get_contents($filePath);
         if ($fileContent === false) {
             throw new Exception("Failed to read file at $filePath");
