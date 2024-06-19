@@ -25,6 +25,7 @@ class FormsPlugin extends Plugin {
                 $this->applyPatchToClassTicketFile();
                 $this->replaceOpenFile();
                 $this->replacePluginFile();
+                $this->updateInstalledColumn('Forms Plugin');
             }
         }
         else {
@@ -117,6 +118,7 @@ class FormsPlugin extends Plugin {
     
     function replacePluginFile() {
         $this->replaceFile(INCLUDE_DIR . 'staff/plugins.inc.php', 'plugins-modified.inc.php', 'plugins-backup.inc.php');
+        $this->replaceFile(SCP_DIR . 'plugins.php', 'plugins-modified.php', 'plugins-backup.php');
     }
     //____________________________________________________________________________________________________________
 
@@ -139,6 +141,7 @@ class FormsPlugin extends Plugin {
     
     function restorePluginFile() {
         $this->restoreFile(INCLUDE_DIR . 'staff/plugins.inc.php', 'plugins-backup.inc.php');
+        $this->restoreFile(SCP_DIR . 'plugins.php', 'plugins-backup.php');
     }
     //____________________________________________________________________________________________________________
     
@@ -468,6 +471,34 @@ class FormsPlugin extends Plugin {
             return false;
         }
     }
+    
+    function updateInstalledColumn($pluginName) {
+        $query = "UPDATE " . TABLE_PREFIX . "plugin SET installed = NOW() WHERE name = '" . $pluginName . "'";
+
+        $result = db_query($query);
+
+        if ($result) {
+            return true;
+        } else {
+            error_log("Error updating installed column for plugin '$pluginName' in " . TABLE_PREFIX . "plugin table");
+            return false;
+        }
+    }
+    
+    static function getPluginNameById($pluginId) {
+        $query = "SELECT name FROM " . TABLE_PREFIX . "plugin WHERE id = " . $pluginId;
+
+        $result = db_query($query);
+
+        if ($result) {
+            $row = db_fetch_array($result);
+            return $row['name'];
+        } else {
+            error_log("Error fetching plugin name for ID '$pluginId' from " . TABLE_PREFIX . "plugin table");
+            return false;
+        }
+    }
+    
     //_____________________________________________________________________________________________________________________
     
     //DATABASE AND BACKUP FUNCTIONS________________________________________________________________________________________
