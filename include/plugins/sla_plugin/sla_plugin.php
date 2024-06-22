@@ -42,6 +42,27 @@ class SLAPlugin extends Plugin{
         }
     }
        
+    function isCodeAlreadyInserted($filePath, $codeSnippet) {
+        $fileContent = file_get_contents($filePath);
+        if ($fileContent === false) {
+            throw new Exception("Failed to read file at $filePath");
+        }
+
+        return strpos($fileContent, $codeSnippet) !== false;
+    }
+    
+    function restoreFile($file_path,$backup_path) {
+        $backup_file_path = __DIR__ . '\backup_files' . '/' . basename($backup_path);
+        
+        if (file_exists($backup_file_path)) {
+            copy($backup_file_path, $file_path);
+            // Delete the backup file after restoring
+            //unlink($backup_file_path);
+        } else {
+            error_log("Backup file for $file_path does not exist!");
+        }
+    }
+    
     function applyPatch($file, $patch) {
         if (!file_exists($file)) {
             return false;
@@ -195,24 +216,28 @@ class SLAPlugin extends Plugin{
     }
     
     function do_ajax_tickets_patches(){
-        if(!$this->isPluginActive() || $this->ajaxTicketsPatched){
+        $checkCode = "case 'suspend':
+                \$state =  'suspended';
+                break;";
+        if(!$this->isPluginActive()){
+            if($this->isCodeAlreadyInserted(INCLUDE_DIR . 'ajax.tickets.php', $checkCode)) {
+                $this->undo_ajax_tickets_patches();
+            }
             return;
         }
         $patches = $this->ajax_tickets_list_of_patches();
         foreach ($patches['searches'] as $index=>$search) {
-            $this->applyPatch($patches['file_path'], $this->patch_to($search, $search . "\n" . $patches['replaces'][$index]));
+            $fileContents = file_get_contents($patches['file_path']);
+            if(!$this->isCodeAlreadyInserted($patches['file_path'], $patches['replaces'][$index]) || ($patches['replaces'][$index] == $checkCode && substr_count($fileContents, $checkCode) < 2)) {
+                $this->applyPatch($patches['file_path'], $this->patch_to($search, $search . "\n" . $patches['replaces'][$index]));
+            }
         }
         $this->normalizeLineEndingsToCRLF($patches['file_path']);
         $this->ajaxTicketsPatched = true;
     }
     
     function undo_ajax_tickets_patches(){
-        $patches = $this->ajax_tickets_list_of_patches();
-        foreach ($patches['searches'] as $index=>$search) {
-            $this->applyPatch($patches['file_path'], $this->patch_to($search . "\n" . $patches['replaces'][$index], $search));
-        }
-        $this->normalizeLineEndingsToCRLF($patches['file_path']);
-        $this->ajaxTicketsPatched = false;
+        $this->restoreFile(INCLUDE_DIR . 'ajax.tickets.php', 'backup_files/ajax.tickets-backup.php');
     }
 
     function class_ticket_list_of_patches(){
@@ -312,12 +337,18 @@ class SLAPlugin extends Plugin{
     }
     
     function do_class_ticket_patches(){
-        if(!$this->isPluginActive() || $this->classTicketPatched){
+        if(!$this->isPluginActive()){
+            $checkCode = "const PERM_SUSPEND   = 'ticket.suspend';";
+            if($this->isCodeAlreadyInserted(INCLUDE_DIR . 'class.ticket.php', $checkCode)) {
+                $this->undo_class_ticket_patches();
+            }
             return;
         }
         $patches = $this->class_ticket_list_of_patches();
         foreach ($patches['searches'] as $index=>$search) {
-            $this->applyPatch($patches['file_path'], $this->patch_to($search, $search . "\n" . $patches['replaces'][$index]));
+            if(!$this->isCodeAlreadyInserted($patches['file_path'], $patches['replaces'][$index])) {
+                $this->applyPatch($patches['file_path'], $this->patch_to($search, $search . "\n" . $patches['replaces'][$index]));
+            }
         }   
         $this->normalizeLineEndingsToCRLF($patches['file_path']);
         $this->classTicketPatched = true;
@@ -336,18 +367,10 @@ class SLAPlugin extends Plugin{
         } else {
             error_log("Error while closing past suspensions: " . db_error());
         }
-        $patches = $this->class_ticket_list_of_patches();
-        foreach ($patches['searches'] as $index=>$search) {
-            $this->applyPatch($patches['file_path'], $this->patch_to($search . "\n" . $patches['replaces'][$index], $search));
-        }
-        $this->normalizeLineEndingsToCRLF($patches['file_path']);
-        $this->classTicketPatched = false;
+        $this->restoreFile(INCLUDE_DIR . 'class.ticket.php', 'backup_files/class.ticket-backup.php');
     }
     
     function do_status_options_patches(){
-        if(!$this->isPluginActive() || $this->status_options){
-            return;
-        }
         $search = "// Map states to actions
 \$actions= array(
         'closed' => array(
@@ -386,7 +409,13 @@ if (!\$ticket || \$ticket->isCloseable()){
     \$states[] = 'closed';
     \$states[] = 'suspended';
 }";
-        $this->applyPatch(INCLUDE_DIR . "staff/templates/status-options.tmpl.php", $this->patch_to($search, $search . "\n" . $replace));
+        if(!$this->isPluginActive()){
+            if($this->isCodeAlreadyInserted(INCLUDE_DIR . "staff/templates/status-options.tmpl.php", $replace)) {
+                $this->undo_status_options_patches();
+            }
+            return;
+        }
+        $this->applyPatch(INCLUDE_DIR . "staff/templates/status-options.tmpl.php", $this->patch_to($search, $replace));
         $this->normalizeLineEndingsToCRLF(INCLUDE_DIR . "staff/templates/status-options.tmpl.php");
         $this->status_options = true;
     }
@@ -430,7 +459,7 @@ if (!\$ticket || \$ticket->isCloseable()){
     \$states[] = 'closed';
     \$states[] = 'suspended';
 }";
-        $this->applyPatch(INCLUDE_DIR . "staff/templates/status-options.tmpl.php", $this->patch_to($search . "\n" . $replace, $search));
+        $this->applyPatch(INCLUDE_DIR . "staff/templates/status-options.tmpl.php", $this->patch_to($search, $replace));
         $this->normalizeLineEndingsToCRLF(INCLUDE_DIR . "staff/templates/status-options.tmpl.php");
         $this->status_options = false;
     }
