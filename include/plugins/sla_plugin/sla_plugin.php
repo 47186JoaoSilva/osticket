@@ -194,19 +194,19 @@ class SLAPlugin extends Plugin{
                     break;"
         );
         $replaces = array(
-            "case 'suspend':
+            "case 'suspended':
                 \$state =  'suspended';
                 break;",
             "case 'suspended':
-                    if (!\$role->hasPerm(Ticket::PERM_SUSPEND))
+                    if (!\$role->hasPerm(Ticket::PERM_CLOSE))
                         \$errors['err'] = sprintf(__('You do not have permission %s'),
                                 __('to suspend tickets'));
                     break;",
-            "case 'suspend':
+            "case 'suspended':
                 \$state =  'suspended';
                 break;",
             "case 'suspended':
-                    if (!\$thisstaff->hasPerm(Ticket::PERM_SUSPEND, false))
+                    if (!\$thisstaff->hasPerm(Ticket::PERM_CLOSE, false))
                         \$errors['err'] = sprintf(__('You do not have permission %s'),
                                 __('to suspend tickets'));
                     break;"
@@ -216,7 +216,7 @@ class SLAPlugin extends Plugin{
     }
     
     function do_ajax_tickets_patches(){
-        $checkCode = "case 'suspend':
+        $checkCode = "case 'suspended':
                 \$state =  'suspended';
                 break;";
         if(!$this->isPluginActive()){
@@ -528,10 +528,8 @@ if (!\$ticket || \$ticket->isCloseable()){
         }
         $begin_suspension = date("Y-m-d H:i:s");
         $begin_suspension_query = 
-            "START TRANSACTION;
-                INSERT INTO ".TABLE_PREFIX."ticket_suspend_status_info(ticket_id, act_flag, begin_suspension, end_suspension, reason, suspension_time)
-                VALUES (".$ticket_id.", 1, ".$begin_suspension.", NULL,".$reason.", NULL);
-            COMMIT;";
+            "INSERT INTO ".TABLE_PREFIX."ticket_suspend_status_info(ticket_id, act_flag, begin_suspension, end_suspension, reason, suspension_time)
+                VALUES ($ticket_id, 1, $begin_suspension, NULL,$reason, NULL);";
             $result = db_query($begin_suspension_query);
             if ($result) {
                 error_log("New suspension for ticket ".$ticket_id." was successfully initiated.");
