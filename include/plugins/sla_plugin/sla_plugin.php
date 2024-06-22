@@ -7,13 +7,10 @@ require_once(INCLUDE_DIR . 'class.dispatcher.php');
 require_once(INCLUDE_DIR . 'plugins/sla_plugin/sla_types.php');
 
 class SLAPlugin extends Plugin{
-    private $ajaxTicketsPatched = false;
-    private $classTicketPatched = false;   
-    private $status_options = false;
-
     
     function bootstrap() {
         //Signal quando o plugin é ativado ou desativado
+        Signal::connect('model.updated', array($this, 'alter_table_tickets_suspension_state_date'));
         Signal::connect('model.updated', array($this, 'create_suspension_state'));
         Signal::connect('model.updated', array($this, 'create_suspensions_table'));
         Signal::connect('model.updated', array($this, 'do_ajax_tickets_patches'));
@@ -26,6 +23,7 @@ class SLAPlugin extends Plugin{
         Signal::connect('model.deleted', array($this, 'undo_ajax_tickets_patches'));
         Signal::connect('model.deleted', array($this, 'drop_suspensions_table'));
         Signal::connect('model.deleted', array($this, 'delete_suspension_state'));
+        Signal::connect('model.deleted', array($this, 'alter_table_tickets_suspension_state_date'));
     }
     
     function normalizeLineEndingsToCRLF($file_path) {
@@ -233,7 +231,6 @@ class SLAPlugin extends Plugin{
             }
         }
         $this->normalizeLineEndingsToCRLF($patches['file_path']);
-        $this->ajaxTicketsPatched = true;
     }
     
     function undo_ajax_tickets_patches(){
@@ -243,6 +240,7 @@ class SLAPlugin extends Plugin{
     function class_ticket_list_of_patches(){
         $file_path = INCLUDE_DIR . 'class.ticket.php';
         $searches = array(
+            "require_once(INCLUDE_DIR.'class.faq.php');",
             "const PERM_DELETE   = 'ticket.delete';",
             "/* @trans */ 'Ability to delete tickets'),",
             "function isClosed() {
@@ -290,6 +288,7 @@ class SLAPlugin extends Plugin{
         switch (strtolower(\$state)) {"
         );
         $replaces = array(
+            "require_once(INCLUDE_DIR.'plugins/sla_plugin/sla_plugin.php');",
             "const PERM_SUSPEND   = 'ticket.suspend';",
             "self::PERM_SUSPEND => array(
                 'title' =>
@@ -316,19 +315,22 @@ class SLAPlugin extends Plugin{
                     \$ecb = function(\$t) use (\$status) {
                         \$t->logEvent('suspended', array('status' => array(\$status->getId(), \$status->getName())), null, 'suspended');
                     };
-                    \$reason = '';
-                    SLAPlugin::start_suspension(\$this->getId(), \$reason);
+                    \$sla_plugin = new SLAPlugin();
+                    \$sla_plugin->start_suspension(\$this->getId(), \$comments);
                 }
                 break;",
             "if(\$this->isSuspended()){
-                    SLAPlugin::end_suspension(\$this->getId());
-                    SLAPlugin::close_suspension(\$this->getId());
+                \$sla_plugin = new SLAPlugin();
+                    \$sla_plugin->end_suspension(\$this->getId());
+                    \$sla_plugin->close_suspension(\$this->getId());
                 }
                 if(\$this->isOpen()){
-                    SLAPlugin::close_suspension(\$this->getId());
+                    \$sla_plugin = new SLAPlugin();
+                    \$sla_plugin->close_suspension(\$this->getId());
                 }",
             "if(\$this->isSuspended()){
-                    SLAPlugin::end_suspension(\$this->getId());
+                \$sla_plugin = new SLAPlugin();
+                    \$sla_plugin->end_suspension(\$this->getId());
                 }",
             "case 'suspended':
             return \$this->setStatus('suspended');"
@@ -351,7 +353,6 @@ class SLAPlugin extends Plugin{
             }
         }   
         $this->normalizeLineEndingsToCRLF($patches['file_path']);
-        $this->classTicketPatched = true;
     }
     
     function undo_class_ticket_patches(){
@@ -464,6 +465,17 @@ if (!\$ticket || \$ticket->isCloseable()){
         $this->status_options = false;
     }
     
+    function alter_table_tickets_suspension_state_date(){
+        $query = ""; 
+        if(!$this->isPluginActive()){
+            $query = "ALTER TABLE ".TABLE_PREFIX."ticket DROP COLUMN suspended;";
+        }
+        else{
+            $query = "ALTER TABLE ".TABLE_PREFIX."ticket ADD suspended DATETIME;";
+        }
+        $result = db_query($query);
+    }
+    
     function create_suspension_state(){
         if(!$this->isPluginActive()){
             return;
@@ -529,25 +541,19 @@ if (!\$ticket || \$ticket->isCloseable()){
         $begin_suspension = date("Y-m-d H:i:s");
         $begin_suspension_query = 
             "INSERT INTO ".TABLE_PREFIX."ticket_suspend_status_info(ticket_id, act_flag, begin_suspension, end_suspension, reason, suspension_time)
-                VALUES ($ticket_id, 1, $begin_suspension, NULL,$reason, NULL);";
-            $result = db_query($begin_suspension_query);
-            if ($result) {
-                error_log("New suspension for ticket ".$ticket_id." was successfully initiated.");
-            } else {
-                error_log("Error while creating a new suspension for ticket ".$ticket_id.":" . db_error());
-            }
+                VALUES ('$ticket_id', 1, '$begin_suspension', NULL,'$reason', NULL);";
+        db_query($begin_suspension_query);    
     }
 
     function end_suspension($ticket_id){
         if(!$this->isPluginActive()){
             return;
         }
-        // TODO (Dependendo do SLA ter em conta: horas laborais, fins de semana/feriados/dias úteis/dias ativos de SLA)
         $end_date = date("Y-m-d H:i:s");
         $end_time = date("H:i:s");
         $weekday_end_date = strtolower(date('l'));
 
-        $get_begin_suspension_query = "SELECT begin_suspension FROM ".TABLE_PREFIX."ticket_suspend_status_info WHERE ticket_id = '".$ticket_id."' AND end_suspension IS NULL AND act_flag = 1;";
+        $get_begin_suspension_query = "SELECT begin_suspension FROM ".TABLE_PREFIX."ticket_suspend_status_info WHERE ticket_id = '$ticket_id' AND end_suspension IS NULL AND act_flag = 1;";
         $result = db_query($get_begin_suspension_query);
 
         if (!$result) {
@@ -563,7 +569,7 @@ if (!\$ticket || \$ticket->isCloseable()){
         $get_sla_query = "SELECT ose.name FROM ost_ticket ott
                         INNER JOIN ost_sla osa ON osa.id = ott.sla_id
                         INNER JOIN ost_schedule ose ON ose.id = osa.schedule_id
-                        WHERE ott.ticket_id = ".$ticket_id.";";
+                        WHERE ott.ticket_id = $ticket_id;";
         $result = db_query($get_sla_query);
         if (!$result) {
             error_log("Error getting sla id.");
@@ -578,17 +584,10 @@ if (!\$ticket || \$ticket->isCloseable()){
         $sus_time = $sla_types->getSusHours($begin_suspension, $end_date, $sla_name, $ticket_id);
 
         $end_suspension_query =
-            "START TRANSACTION;
-                UPDATE ".TABLE_PREFIX."ticket_suspend_status_info
-                SET end_suspension = ".$end_date.", suspension_time = ROUND(".$sus_time.", 2)
-                WHERE tid IN (SELECT tid FROM ".TABLE_PREFIX."ticket_suspend_status_info WHERE ticket_id = '".$ticket_id."' AND end_suspension IS NULL AND act_flag = 1);
-            COMMIT;";
-        $result = db_query($end_suspension_query);
-        if ($result) {
-            error_log("Current active suspension for ".$ticket_id." was successfully terminated.");
-        } else {
-            error_log("Error while terminating current active suspension for ticket ".$ticket_id.":" . db_error());
-        }
+            "UPDATE ".TABLE_PREFIX."ticket_suspend_status_info
+                SET end_suspension = '$end_date', suspension_time = ROUND($sus_time, 2)
+                WHERE tid IN (SELECT tid FROM ".TABLE_PREFIX."ticket_suspend_status_info WHERE ticket_id = '$ticket_id' AND end_suspension IS NULL AND act_flag = 1);";
+        db_query($end_suspension_query);
     }
 
     function close_suspension($ticket_id){
@@ -596,17 +595,10 @@ if (!\$ticket || \$ticket->isCloseable()){
             return;
         }
         $close_suspension_query =
-            "START TRANSACTION;
-                UPDATE ".TABLE_PREFIX."ticket_suspend_status_info
-                SET act_flag = 0
-                WHERE tid IN (SELECT tid FROM ".TABLE_PREFIX."ticket_suspend_status_info WHERE ticket_id = '".$ticket_id."' AND act_flag = 1 AND end_suspension IS NOT NULL);
-            COMMIT;";
-        $result = db_query($close_suspension_query);
-        if ($result) {
-            error_log("All past suspensions for ticket ".$ticket_id." where successfully closed.");
-        } else {
-            error_log("Error while closing past suspensions for ticket ".$ticket_id.":" . db_error());
-        }
+            "UPDATE ".TABLE_PREFIX."ticket_suspend_status_info
+             SET act_flag = 0
+             WHERE tid IN (SELECT tid FROM ".TABLE_PREFIX."ticket_suspend_status_info WHERE ticket_id = '$ticket_id' AND act_flag = 1 AND end_suspension IS NOT NULL);";
+        db_query($close_suspension_query);
     }
 
     function isPluginActive() {

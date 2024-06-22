@@ -83,17 +83,17 @@ class sla_types {
     }
     
     public function getSusHours($beginDate, $endDate, $slaName, $ticket_id){
-        $begin = DateTime::createFromFormat('d-m-Y', $beginDate);
-        $end = DateTime::createFromFormat('d-m-Y', $endDate);
+        $begin = DateTime::createFromFormat('Y-m-d H:i:s', $beginDate);
+        $end = DateTime::createFromFormat('Y-m-d H:i:s', $endDate);
 
         if (!$begin || !$end || $begin > $end) {
             throw new InvalidArgumentException("Invalid dates provided.");
         }        
         
-        $begin_time_hour = (int)DateTime::createFromFormat('H', $beginDate);
-        $end_time_hour = (int)DateTime::createFromFormat('H', $endDate);
-        $begin_time_minute = (int)DateTime::createFromFormat('i', $beginDate);
-        $end_time_minute = (int)DateTime::createFromFormat('i', $endDate);
+        $begin_time_hour = (int)$begin->format('H');
+        $end_time_hour = (int)$end->format('H');
+        $begin_time_minute = (int)$begin->format('i');
+        $end_time_minute = (int)$end->format('i');
         $time_diff = ($end_time_hour - $begin_time_hour) + ($end_time_minute - $begin_time_minute) / 60;
 
         $get_suspension_time_query = "SELECT suspension_time FROM ".TABLE_PREFIX."ticket_suspend_status_info WHERE ticket_id = '$ticket_id' AND act_flag = 1 AND end_suspension IS NOT NULL ORDER BY tid DESC;";
@@ -109,7 +109,7 @@ class sla_types {
         
         $hours = $suspension_time + $time_diff;
         
-        if($beginDate === $end){
+        if($begin->format('Y-m-d') === $end->format('Y-m-d')){
             return $hours;
         }        
         
