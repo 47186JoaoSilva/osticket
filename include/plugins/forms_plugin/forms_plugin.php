@@ -25,7 +25,6 @@ class FormsPlugin extends Plugin {
                 $this->applyPatchToClassTicketFile();
                 $this->replaceOpenFile();
                 $this->replacePluginFile();
-                $this->updateInstalledColumn('Forms Plugin');
             }
         }
         else {
@@ -79,12 +78,6 @@ class FormsPlugin extends Plugin {
     
     function applyPatchToClassTicketFile() {
         $file_path = INCLUDE_DIR . 'class.ticket.php';
-        $backup_file_path = __DIR__ . '\backup_files' . '/class.ticket-backup.php';
-        
-        // Copy the original file to the backup directory
-        if (!copy($file_path, $backup_file_path)) {
-            error_log("Failed to create backup of $file_path at $backup_file_path!");
-        }
         
         $this->insertCodeIntoFile(
             $file_path, 
@@ -118,7 +111,6 @@ class FormsPlugin extends Plugin {
     
     function replacePluginFile() {
         $this->replaceFile(INCLUDE_DIR . 'staff/plugins.inc.php', 'plugins-modified.inc.php', 'plugins-backup.inc.php');
-        $this->replaceFile(SCP_DIR . 'plugins.php', 'plugins-modified.php', 'plugins-backup.php');
     }
     //____________________________________________________________________________________________________________
 
@@ -132,7 +124,32 @@ class FormsPlugin extends Plugin {
     }
     
     function restoreClassTicketFile() {
-        $this->restoreFile(INCLUDE_DIR . 'class.ticket.php', 'class.ticket-backup.php');
+        $file_path = INCLUDE_DIR . 'class.ticket.php';
+        
+        $this->insertCodeIntoFile(
+            $file_path, 
+            $this->classTicketRecover1,
+            'if ($this->hasFlag(self::FLAG_SEPARATE_THREADS))', 
+            '    function isMerged() {'
+        );
+        $this->insertCodeIntoFile(
+            $file_path, 
+            '',
+            'switch ($fid) {', 
+            '        case \'priority\':'
+        );
+        $this->insertCodeIntoFile(
+            $file_path, 
+            '',
+            '$fields[\'duedate\']  = array(\'type\'=>\'date\', \'required\'=>0, \'error\'=>__(\'Invalid date format - must be MM/DD/YY\'));', 
+            '            case \'api\':'
+        );
+        $this->insertCodeIntoFile(
+            $file_path, 
+            $this->classTicketRecover4,
+            'Misc::dbtime($vars[\'duedate\']));', 
+            '        if (!$ticket->save())'
+        );
     }
     
     function restoreOpenFile() {
@@ -141,7 +158,6 @@ class FormsPlugin extends Plugin {
     
     function restorePluginFile() {
         $this->restoreFile(INCLUDE_DIR . 'staff/plugins.inc.php', 'plugins-backup.inc.php');
-        $this->restoreFile(SCP_DIR . 'plugins.php', 'plugins-backup.php');
     }
     //____________________________________________________________________________________________________________
     
@@ -222,9 +238,15 @@ class FormsPlugin extends Plugin {
         $startPointEnd = $startPos + strlen($startPoint);
         $endPointStart = $endPos;
 
-        $updatedContent = substr($fileContent, 0, $startPointEnd) 
-            . "\n" . $newCode . "\n"                             
-            . substr($fileContent, $endPointStart);              
+         if ($newCode === '') {
+            $updatedContent = substr($fileContent, 0, $startPointEnd) 
+                . "\n"
+                . substr($fileContent, $endPointStart);              
+        } else {
+            $updatedContent = substr($fileContent, 0, $startPointEnd) 
+                . "\n" . $newCode . "\n"                             
+                . substr($fileContent, $endPointStart);              
+        }           
 
         if (file_put_contents($filePath, $updatedContent) === false) {
             throw new Exception("Failed to write updated content to file $filePath");
@@ -468,33 +490,6 @@ class FormsPlugin extends Plugin {
             return ($rowCount > 0); 
         } else {
             error_log("Error checking column existence in table " . TABLE_PREFIX . "ticket");
-            return false;
-        }
-    }
-    
-    function updateInstalledColumn($pluginName) {
-        $query = "UPDATE " . TABLE_PREFIX . "plugin SET installed = NOW() WHERE name = '" . $pluginName . "'";
-
-        $result = db_query($query);
-
-        if ($result) {
-            return true;
-        } else {
-            error_log("Error updating installed column for plugin '$pluginName' in " . TABLE_PREFIX . "plugin table");
-            return false;
-        }
-    }
-    
-    static function getPluginNameById($pluginId) {
-        $query = "SELECT name FROM " . TABLE_PREFIX . "plugin WHERE id = " . $pluginId;
-
-        $result = db_query($query);
-
-        if ($result) {
-            $row = db_fetch_array($result);
-            return $row['name'];
-        } else {
-            error_log("Error fetching plugin name for ID '$pluginId' from " . TABLE_PREFIX . "plugin table");
             return false;
         }
     }
@@ -803,6 +798,16 @@ class FormsPlugin extends Plugin {
         }
         //________________________________________________________________________________
     '; 
+    
+    public $classTicketRecover1 = '            return \'separate\';
+        else
+            return \'visual\';
+        return \'visual\';
+    }
+    ';
+    public $classTicketRecover4 = '    
+    ';
+    
     //_____________________________________________________________________________________________________________________
 }
 $forms_plugin = new FormsPlugin();

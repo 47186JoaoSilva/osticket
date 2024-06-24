@@ -271,7 +271,7 @@ implements RestrictedAccess, Threadable, Searchable {
             return 'visual';
         return 'visual';
     }
-
+    
     function isMerged() {
         if (!is_null($this->getPid()) || $this->isParent())
             return true;
@@ -4373,8 +4373,8 @@ implements RestrictedAccess, Threadable, Searchable {
         if ($vars['duedate'] && !strcasecmp($origin,'staff'))
             $ticket->duedate = date('Y-m-d G:i',
                 Misc::dbtime($vars['duedate']));
-
-
+    
+    
         if (!$ticket->save())
             return null;
         if (!($thread = TicketThread::create($ticket->getId())))
