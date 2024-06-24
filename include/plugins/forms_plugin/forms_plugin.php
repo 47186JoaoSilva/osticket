@@ -110,7 +110,14 @@ class FormsPlugin extends Plugin {
     }
     
     function replacePluginFile() {
-        $this->replaceFile(INCLUDE_DIR . 'staff/plugins.inc.php', 'plugins-modified.inc.php', 'plugins-backup.inc.php');
+        $file_path = INCLUDE_DIR . 'staff/plugins.inc.php';
+        
+        $this->insertCodeIntoFile(
+            $file_path, 
+            $this->classPluginPatch, 
+            '__(\'Are you sure you want to <b>disable</b> %s?\'),', 
+            ''
+        );
     }
     //____________________________________________________________________________________________________________
 
@@ -157,7 +164,14 @@ class FormsPlugin extends Plugin {
     }
     
     function restorePluginFile() {
-        $this->restoreFile(INCLUDE_DIR . 'staff/plugins.inc.php', 'plugins-backup.inc.php');
+        $file_path = INCLUDE_DIR . 'staff/plugins.inc.php';
+        
+        $this->insertCodeIntoFile(
+            $file_path, 
+            $this->classPluginRestore, 
+            '__(\'Are you sure you want to <b>disable</b> %s?\'),', 
+            ''
+        );
     }
     //____________________________________________________________________________________________________________
     
@@ -230,15 +244,21 @@ class FormsPlugin extends Plugin {
             throw new Exception("Start point '$startPoint' not found in file $filePath");
         }
 
-        $endPos = strpos($fileContent, $endPoint, $startPos);
-        if ($endPos === false) {
-            throw new Exception("End point '$endPoint' not found in file $filePath");
+        $startPointEnd = $startPos + strlen($startPoint);
+
+        if ($endPoint === '') {
+            // If endPoint is an empty string, set endPos to the end of the file
+            $endPos = strlen($fileContent);
+        } else {
+            $endPos = strpos($fileContent, $endPoint, $startPos);
+            if ($endPos === false) {
+                throw new Exception("End point '$endPoint' not found in file $filePath");
+            }
         }
 
-        $startPointEnd = $startPos + strlen($startPoint);
         $endPointStart = $endPos;
 
-         if ($newCode === '') {
+        if ($newCode === '') {
             $updatedContent = substr($fileContent, 0, $startPointEnd) 
                 . "\n"
                 . substr($fileContent, $endPointStart);              
@@ -254,7 +274,7 @@ class FormsPlugin extends Plugin {
 
         return true;
     }
-    
+
     function moveFileToDirectory($source, $destination) {
         if (!file_exists($source)) {
             return "Source file does not exist.";
@@ -805,8 +825,59 @@ class FormsPlugin extends Plugin {
         return \'visual\';
     }
     ';
+    
     public $classTicketRecover4 = '    
     ';
+    
+    public $classPluginPatch = '        _N(\'selected plugin\', \'selected plugins\', 2)); ?></font> 
+        </p>
+        <div>
+            <?php echo __(\'Queres fazer backup dos tickets criados durante o tempo de vida do Plugin?\'); ?>
+            <input type="checkbox" id="eraseDataCheckbox">
+        </div>
+        <hr style="margin-top:1em"/>
+        <p class="full-width">
+            <span class="buttons pull-left">
+                <input type="button" value="<?php echo __(\'No, Cancel\'); ?>" class="close">
+            </span>
+            <span class="buttons pull-right">
+                <input type="button" value="<?php echo __(\'Yes, Do it!\'); ?>" class="confirm" onclick="handleCheckbox()">
+            </span>
+         </p>
+        <div class="clear"></div>
+    </div>
+
+    <script>
+        function handleCheckbox() {
+            var checkbox = document.getElementById("eraseDataCheckbox");
+            if (!checkbox.checked) {
+                var xmlhttp = new XMLHttpRequest();
+                xmlhttp.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 200) {
+                        console.log(this.responseText);
+                    }
+                };
+                xmlhttp.open("GET", "erase_data.php", true);
+                xmlhttp.send();
+            }
+        }
+    </script>
+    ';
+    
+    public $classPluginRestore = '        _N(\'selected plugin\', \'selected plugins\', 2)); ?></font>    
+        </p>
+        <div><?php echo __(\'Please confirm to continue.\'); ?></div>
+        <hr style="margin-top:1em"/>
+        <p class="full-width">
+            <span class="buttons pull-left">
+                <input type="button" value="<?php echo __(\'No, Cancel\'); ?>" class="close">
+            </span>
+            <span class="buttons pull-right">
+                <input type="button" value="<?php echo __(\'Yes, Do it!\'); ?>" class="confirm">
+            </span>
+         </p>
+        <div class="clear"></div>
+    </div>';
     
     //_____________________________________________________________________________________________________________________
 }

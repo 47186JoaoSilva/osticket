@@ -132,17 +132,17 @@ if ($count) //Show options..
     <p class="confirm-action" style="display:none;" id="disable-confirm">
         <font color="red"><?php echo sprintf(
         __('Are you sure you want to <b>disable</b> %s?'),
-        _N('selected plugin', 'selected plugins', 2)); ?></font>
-    </p>
-    <div><?php echo __('Please confirm to continue.'); ?></div>
-    <hr style="margin-top:1em"/>
-    <p class="full-width">
-        <span class="buttons pull-left">
-            <input type="button" value="<?php echo __('No, Cancel'); ?>" class="close">
-        </span>
-        <span class="buttons pull-right">
-            <input type="button" value="<?php echo __('Yes, Do it!'); ?>" class="confirm">
-        </span>
-     </p>
-    <div class="clear"></div>
-</div>
+        _N('selected plugin', 'selected plugins', 2)); ?></font>    
+        </p>
+        <div><?php echo __('Please confirm to continue.'); ?></div>
+        <hr style="margin-top:1em"/>
+        <p class="full-width">
+            <span class="buttons pull-left">
+                <input type="button" value="<?php echo __('No, Cancel'); ?>" class="close">
+            </span>
+            <span class="buttons pull-right">
+                <input type="button" value="<?php echo __('Yes, Do it!'); ?>" class="confirm">
+            </span>
+         </p>
+        <div class="clear"></div>
+    </div>
