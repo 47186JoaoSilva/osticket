@@ -16,6 +16,7 @@ class SLAPlugin extends Plugin{
         Signal::connect('model.updated', array($this, 'do_ajax_tickets_patches'));
         Signal::connect('model.updated', array($this, 'do_class_ticket_patches'));
         Signal::connect('model.updated', array($this, 'do_status_options_patches'));
+        Signal::connect('model.updated', array($this, 'reopen_sus_tickets'));
 
         //Signal quando o plugin é apagado
         Signal::connect('model.deleted', array($this, 'undo_status_options_patches'));
@@ -40,6 +41,15 @@ class SLAPlugin extends Plugin{
         }
     }
        
+    function reopen_sus_tickets(){
+        if(!$this->isPluginActive()){
+            $query = 
+                "UPDATE ".TABLE_PREFIX."ticket SET status_id = 1, reopened = NOW() WHERE status_id = 6;";
+            db_query($query);
+        }
+        return;
+    }
+    
     function isCodeAlreadyInserted($filePath, $codeSnippet) {
         $fileContent = file_get_contents($filePath);
         if ($fileContent === false) {
@@ -301,6 +311,10 @@ class SLAPlugin extends Plugin{
             "case 'suspended':",
             "case 'suspended':
                 if(\$this->isOpen()){
+                    \$sla_types = new sla_types();
+                    if(\$sla_types->check_if_schedule(\$this->getId()) === []){
+                        \$errors['err'] = \$closeable ?: sprintf(__('%s cannot be suspended due to SLA\'s schedule not existing'), __('This ticket'));
+                    }
                     // Check if ticket is closeable
                     \$closeable = \$force_close ? true : \$this->isCloseable();
                     if (\$closeable !== true)

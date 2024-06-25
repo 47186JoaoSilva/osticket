@@ -62,6 +62,20 @@ class sla_types {
         );
     }
     
+    function check_if_schedule($ticket_id){
+        $get_sla_query = "SELECT ose.name FROM ost_ticket ott
+                        INNER JOIN ost_sla osa ON osa.id = ott.sla_id
+                        INNER JOIN ost_schedule ose ON ose.id = osa.schedule_id
+                        WHERE ott.ticket_id = $ticket_id;";
+        $result = db_query($get_sla_query);
+
+        $schedule_name = '';
+        while ($row = db_fetch_array($result)) {
+            $schedule_name = $row['name'];
+        }
+        return $this->list_sla_types[$schedule_name] ?? [];
+    }
+    
     function check_if_date_is_holiday($date){
         $date_formatted = DateTime::createFromFormat('d-m-Y', $date); 
         if(!($date_formatted && $date_formatted->format('d-m-Y') === $date)){
@@ -107,38 +121,156 @@ class sla_types {
             }
         }
         
-        $hours = $suspension_time + $time_diff;
-        
-        if($begin->format('Y-m-d') === $end->format('Y-m-d')){
-            return $hours;
-        }        
+        $hours = $suspension_time; 
         
         $slaDays = $this->list_sla_types[$slaName] ?? [];
         for ($date = clone $begin; $date <= $end; $date->modify('+1 day')) {
             $dayName = strtolower($date->format('l'));
             if ($slaName === '24/7') {
-                if ($this->check_if_date_is_holiday($date->format('d-m-Y'))) {
-                    continue;
-                }
-                $hours += 24;
+                $hours = $this->sla_24_7($hours, $begin, $end, $date, $begin_time_hour, $begin_time_minute, $end_time_hour, $end_time_minute, $time_diff);
             } elseif ($slaName === '24/5') {
-                if ($this->check_if_date_is_holiday($date->format('d-m-Y'))) {
-                    continue;
-                }
-                if (in_array($dayName, $slaDays)) {
-                    $hours += 24;
-                }
+                $hours = $this->sla_24_5($hours, $dayName, $slaDays, $begin, $end, $date, $begin_time_hour, $begin_time_minute, $end_time_hour, $end_time_minute, $time_diff);
             } elseif ($slaName === 'U.S. Holidays') {
-                if ($this->check_if_date_is_holiday($date->format('d-m-Y'))) {
-                    $hours += 24;
-                }
+                $hours = $this->sla_holidays($hours, $begin, $end, $date, $begin_time_hour, $begin_time_minute, $end_time_hour, $end_time_minute, $time_diff);
             } elseif ($slaName === 'Monday - Friday 8am - 5pm with U.S. Holidays') {
-                if (in_array($dayName, $slaDays)) {
-                    $hours += 9;
-                }
+                $hours = $this->sla_8_17($hours, $dayName, $slaDays, $begin, $end, $date, $begin_time_hour, $begin_time_minute, $end_time_hour, $end_time_minute, $time_diff);
             }
         }
 
+        return $hours;
+    }
+    
+    // Private Methods
+    
+    private function sla_24_7($hours_sum, $begin, $end, $date, $begin_time_hour, $begin_time_minute, $end_time_hour, $end_time_minute, $time_diff){
+        $hours = $hours_sum;
+        if ($this->check_if_date_is_holiday($date->format('d-m-Y'))) {
+            if($begin->format('Y-m-d') === $end->format('Y-m-d')){
+                return $hours;
+            }
+            if($date === $end){
+                if ($this->check_if_date_is_holiday($begin->format('d-m-Y'))) {
+                    return $hours;
+                }
+                return $hours + (24-($begin_time_hour + ($begin_time_minute/60)));
+            }
+            return $hours;
+        }
+        if($begin->format('Y-m-d') === $end->format('Y-m-d')){
+            return $hours + $time_diff;
+        }
+        if($date !== $begin && $date !== $end){
+            return $hours + 24;
+        }
+        if($date === $end){
+            return $hours + $end_time_hour + ($end_time_minute/60) + (24-($begin_time_hour + ($begin_time_minute/60)));
+        }
+        return $hours;
+    }
+    
+    private function sla_24_5($hours_sum, $dayName, $slaDays, $begin, $end, $date, $begin_time_hour, $begin_time_minute, $end_time_hour, $end_time_minute, $time_diff){
+        $hours = $hours_sum;
+        if ($this->check_if_date_is_holiday($date->format('d-m-Y'))) {
+            if($begin->format('Y-m-d') === $end->format('Y-m-d')){
+                return $hours;
+            }
+            if($date === $end){
+                if ($this->check_if_date_is_holiday($begin->format('d-m-Y')) || !in_array(strtolower($begin->format('l')), $slaDays)) {
+                    return $hours;
+                }
+                return $hours + (24-($begin_time_hour + ($begin_time_minute/60)));
+            }
+            return $hours;
+        }
+        if (in_array($dayName, $slaDays)) {
+            if($begin->format('Y-m-d') === $end->format('Y-m-d')){
+                return $hours + $time_diff;
+            }
+            if($date !== $begin && $date !== $end){
+                return $hours + 24;
+            }
+            if($date === $end){
+                return $hours + $end_time_hour + ($end_time_minute/60) + (24-($begin_time_hour + ($begin_time_minute/60)));
+            }  
+        }
+        else{
+            if($date === $end){
+                if ($this->check_if_date_is_holiday($begin->format('d-m-Y')) || !in_array(strtolower($begin->format('l')), $slaDays)) {
+                    return $hours;
+                }
+                return $hours + (24-($begin_time_hour + ($begin_time_minute/60)));
+            }
+        }
+        return $hours;
+    }
+    
+    private function sla_holidays($hours_sum, $begin, $end, $date, $begin_time_hour, $begin_time_minute, $end_time_hour, $end_time_minute, $time_diff){
+        $hours = $hours_sum;
+        if ($this->check_if_date_is_holiday($date->format('d-m-Y'))) {
+            if($begin->format('Y-m-d') === $end->format('Y-m-d')){
+                return $hours + $time_diff;
+            }
+            if($date !== $begin && $date !== $end){
+               return $hours + 24;
+            }
+            if($date === $end){
+                if (!$this->check_if_date_is_holiday($begin->format('d-m-Y'))) {
+                    return $hours + $end_time_hour + ($end_time_minute/60);
+                }
+                return $hours + $end_time_hour + ($end_time_minute/60) + (24-($begin_time_hour + ($begin_time_minute/60)));
+            }
+        }
+        else{
+            if($date === $end){
+                if (!$this->check_if_date_is_holiday($begin->format('d-m-Y'))) {
+                    return $hours;
+                }
+                return $hours + (24-($begin_time_hour + ($begin_time_minute/60)));
+            }
+        }
+        return $hours;
+    }
+    
+    private function sla_8_17($hours_sum, $dayName, $slaDays, $begin, $end, $date, $begin_time_hour, $begin_time_minute, $end_time_hour, $end_time_minute, $time_diff){
+        $hours = $hours_sum;
+        if (in_array($dayName, $slaDays)) {
+            if($begin->format('Y-m-d') === $end->format('Y-m-d')){
+                return $hours + $time_diff;
+            }
+            if($date !== $begin && $date !== $end){
+               return $hours + 9;
+            }
+            if($date === $end){
+                if (in_array(strtolower($begin->format('l')), $slaDays)) {
+                    if($begin_time_hour < 8){
+                        $hours += 9;
+                    }
+                    else{
+                        $hours += (17 - ($begin_time_hour + ($begin_time_minute/60)));
+                    }
+                }                        
+                if($end_time_hour > 17){
+                    $hours += 9;
+                }
+                else{
+                    $hours += (($end_time_hour + ($end_time_minute/60)) - 8);
+                }
+                return $hours;
+            }
+        }
+        else{
+            if($date === $end){
+                if (in_array(strtolower($begin->format('l')), $slaDays)) {
+                    if($begin_time_hour < 8){
+                        $hours += 9;
+                    }
+                    else{
+                        $hours += (17 - ($begin_time_hour + ($begin_time_minute/60)));
+                    }
+                }                        
+                return $hours;
+            }
+        }
         return $hours;
     }
 }
