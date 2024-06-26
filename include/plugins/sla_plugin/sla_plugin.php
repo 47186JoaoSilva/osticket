@@ -14,8 +14,8 @@ class SLAPlugin extends Plugin{
         Signal::connect('model.updated', array($this, 'create_suspension_state'));
         Signal::connect('model.updated', array($this, 'create_suspensions_table'));
         Signal::connect('model.updated', array($this, 'do_ajax_tickets_patches'));
-        Signal::connect('model.updated', array($this, 'do_class_ticket_patches'));
         Signal::connect('model.updated', array($this, 'do_status_options_patches'));
+        Signal::connect('model.updated', array($this, 'do_class_ticket_patches'));
         Signal::connect('model.updated', array($this, 'reopen_sus_tickets'));
 
         //Signal quando o plugin é apagado
@@ -25,20 +25,6 @@ class SLAPlugin extends Plugin{
         Signal::connect('model.deleted', array($this, 'drop_suspensions_table'));
         Signal::connect('model.deleted', array($this, 'delete_suspension_state'));
         Signal::connect('model.deleted', array($this, 'alter_table_tickets_suspension_state_date'));
-    }
-    
-    function normalizeLineEndingsToCRLF($file_path) {
-        $text = file_get_contents($file_path);
-
-        if ($text === false) {
-            return;
-        }
-        
-        $normalizedText = preg_replace('/\r\n|\r|\n/', "\r\n", $text);
-        $result = file_put_contents($file_path, $normalizedText);
-        if ($result === false) {
-            return;
-        }
     }
        
     function reopen_sus_tickets(){
@@ -58,195 +44,28 @@ class SLAPlugin extends Plugin{
 
         return strpos($fileContent, $codeSnippet) !== false;
     }
-    
-    function restoreFile($file_path,$backup_path) {
-        $backup_file_path = __DIR__ . '\backup_files' . '/' . basename($backup_path);
-        
-        if (file_exists($backup_file_path)) {
-            copy($backup_file_path, $file_path);
-            // Delete the backup file after restoring
-            //unlink($backup_file_path);
-        } else {
-            error_log("Backup file for $file_path does not exist!");
-        }
-    }
-    
-    function applyPatch($file, $patch) {
-        if (!file_exists($file)) {
-            return false;
-        }
 
-        $contents = file_get_contents($file);
-        if ($contents === false) {
-            return false;
-        }
-        
-        $patchedContents = str_replace($patch['search'], $patch['replace'], $contents);
-
-        $result = file_put_contents($file, $patchedContents);
-        return $result !== false;
-    }
-    
-    function patch_to($search_code, $replace_code){
-        return [
-            'search' => $search_code,
-            'replace' => $replace_code
-        ];
-    } 
-    
-    function ajax_tickets_list_of_patches(){
-        $file_path = INCLUDE_DIR . 'ajax.tickets.php';
-        $searches = array(
-            "function changeTicketStatus(\$tid, \$status, \$id=0) {
-        global \$thisstaff;
-
-        if (!\$thisstaff)
-            Http::response(403, 'Access denied');
-        elseif (!\$tid
-                || !(\$ticket=Ticket::lookup(\$tid))
-                || !\$ticket->checkStaffPerm(\$thisstaff))
-            Http::response(404, 'Unknown ticket #');
-
-        \$role = \$ticket->getRole(\$thisstaff);
-
-        \$info = array();
-        \$state = null;
-        switch(\$status) {
-            case 'open':
-            case 'reopen':
-                \$state = 'open';
-                break;",
-            "function setTicketStatus(\$tid) {
-        global \$thisstaff, \$ost;
-
-        if (!\$thisstaff)
-            Http::response(403, 'Access denied');
-        elseif (!\$tid
-                || !(\$ticket=Ticket::lookup(\$tid))
-                || !\$ticket->checkStaffPerm(\$thisstaff))
-            Http::response(404, 'Unknown ticket #');
-
-        \$errors = \$info = array();
-        if (!\$_POST['status_id']
-                || !(\$status= TicketStatus::lookup(\$_POST['status_id'])))
-            \$errors['status_id'] = sprintf('%s %s',
-                    __('Unknown or invalid'), __('status'));
-        elseif (\$status->getId() == \$ticket->getStatusId())
-            \$errors['err'] = sprintf(__('Ticket already set to %s status'),
-                    __(\$status->getName()));
-        elseif ((\$role = \$ticket->getRole(\$thisstaff))) {
-            // Make sure the agent has permission to set the status
-            switch(mb_strtolower(\$status->getState())) {
-                case 'open':
-                    if (!\$role->hasPerm(Ticket::PERM_CLOSE)
-                            && !\$role->hasPerm(Ticket::PERM_CREATE))
-                        \$errors['err'] = sprintf(__('You do not have permission %s'),
-                                __('to reopen tickets'));
-                    break;
-                case 'closed':
-                    if (!\$role->hasPerm(Ticket::PERM_CLOSE))
-                        \$errors['err'] = sprintf(__('You do not have permission %s'),
-                                __('to resolve/close tickets'));
-                    break;
-                case 'deleted':
-                    if (!\$role->hasPerm(Ticket::PERM_DELETE))
-                        \$errors['err'] = sprintf(__('You do not have permission %s'),
-                                __('to archive/delete tickets'));
-                    break;",
-            "function changeSelectedTicketsStatus(\$status, \$id=0) {
-        global \$thisstaff, \$cfg;
-
-        if (!\$thisstaff)
-            Http::response(403, 'Access denied');
-
-        \$state = null;
-        \$info = array();
-        switch(\$status) {
-            case 'open':
-            case 'reopen':
-                \$state = 'open';
-                break;",
-            "function setSelectedTicketsStatus(\$state) {
-        global \$thisstaff, \$ost;
-
-        \$errors = \$info = array();
-        if (!\$thisstaff || !\$thisstaff->canManageTickets())
-            \$errors['err'] = sprintf('%s %s',
-                    sprintf(__('You do not have permission %s'),
-                        __('to mass manage tickets')),
-                    __('Contact admin for such access'));
-        elseif (!\$_REQUEST['tids'] || !count(\$_REQUEST['tids']))
-            \$errors['err']=sprintf(__('You must select at least %s.'),
-                    __('one ticket'));
-        elseif (!(\$status= TicketStatus::lookup(\$_REQUEST['status_id'])))
-            \$errors['status_id'] = sprintf('%s %s',
-                    __('Unknown or invalid'), __('status'));
-        elseif (!\$errors) {
-            // Make sure the agent has permission to set the status
-            switch(mb_strtolower(\$status->getState())) {
-                case 'open':
-                    if (!\$thisstaff->hasPerm(Ticket::PERM_CLOSE, false)
-                            && !\$thisstaff->hasPerm(Ticket::PERM_CREATE, false))
-                        \$errors['err'] = sprintf(__('You do not have permission %s'),
-                                __('to reopen tickets'));
-                    break;
-                case 'closed':
-                    if (!\$thisstaff->hasPerm(Ticket::PERM_CLOSE, false))
-                        \$errors['err'] = sprintf(__('You do not have permission %s'),
-                                __('to resolve/close tickets'));
-                    break;
-                case 'deleted':
-                    if (!\$thisstaff->hasPerm(Ticket::PERM_DELETE, false))
-                        \$errors['err'] = sprintf(__('You do not have permission %s'),
-                                __('to archive/delete tickets'));
-                    break;"
-        );
-        $replaces = array(
-            "            case 'suspended':
-                \$state =  'suspended';
-                break;",
-            "                case 'suspended':
-                    if (!\$role->hasPerm(Ticket::PERM_CLOSE))
-                        \$errors['err'] = sprintf(__('You do not have permission %s'),
-                                __('to suspend tickets'));
-                    break;",
-            "            case 'suspended':
-                \$state =  'suspended';
-                break;",
-            "                case 'suspended':
-                    if (!\$thisstaff->hasPerm(Ticket::PERM_CLOSE, false))
-                        \$errors['err'] = sprintf(__('You do not have permission %s'),
-                                __('to suspend tickets'));
-                    break;"
-            
-        );
-        return array('file_path' => $file_path, 'searches' => $searches, 'replaces' => $replaces);
-    }
-    
+//AJAX TICKET CHANGES_____________________________________________________________________________________________________
     function do_ajax_tickets_patches(){
-        $checkCode = "case 'suspended':
-                \$state =  'suspended';
-                break;";
-        if(!$this->isPluginActive()){
-            if($this->isCodeAlreadyInserted(INCLUDE_DIR . 'ajax.tickets.php', $checkCode)) {
+        $checkCode = "require_once(INCLUDE_DIR.'plugins/sla_plugin/sla_plugin.php');";
+        if($this->isPluginActive()) {
+            if(!$this->isCodeAlreadyInserted(INCLUDE_DIR . 'class.ticket.php', $checkCode)) {
+              $this->replaceFile(INCLUDE_DIR . 'ajax.tickets.php', 'ajax.tickets-modified.php', 'ajax.tickets-backup.php');
+            }
+        } else {
+            if($this->isCodeAlreadyInserted(INCLUDE_DIR . 'class.ticket.php', $checkCode)) {
                 $this->undo_ajax_tickets_patches();
             }
-            return;
-        }
-        $patches = $this->ajax_tickets_list_of_patches();
-        foreach ($patches['searches'] as $index=>$search) {
-            $fileContents = file_get_contents($patches['file_path']);
-            if(!$this->isCodeAlreadyInserted($patches['file_path'], $patches['replaces'][$index]) || ($patches['replaces'][$index] == $checkCode && substr_count($fileContents, $checkCode) < 2)) {
-                $this->applyPatch($patches['file_path'], $this->patch_to($search, $search . "\n" . $patches['replaces'][$index]));
-            }
-        }
-        $this->normalizeLineEndingsToCRLF($patches['file_path']);
+        }  
     }
     
     function undo_ajax_tickets_patches(){
         $this->restoreFile(INCLUDE_DIR . 'ajax.tickets.php', 'backup_files/ajax.tickets-backup.php');
     }
 
+//_________________________________________________________________________________________________________________________
+
+//CLASS TICKET CHANGES_____________________________________________________________________________________________________
     function class_ticket_list_of_patches(){
         $filePath = INCLUDE_DIR . 'class.ticket.php';
         $newCode = array(
@@ -535,97 +354,26 @@ class SLAPlugin extends Plugin{
         }
     }
     
+//____________________________________________________________________________________________________________________________  
+ 
+//STATUS OPTIONS CHANGES___________________________________________________________________________________________________________________  
+    
     function do_status_options_patches(){
-        $search = "// Map states to actions
-\$actions= array(
-        'closed' => array(
-            'icon'  => 'icon-ok-circle',
-            'action' => 'close',
-            'href' => 'tickets.php'
-            ),
-        'open' => array(
-            'icon'  => 'icon-undo',
-            'action' => 'reopen'
-            ),
-        );
-
-\$states = array('open');
-if (!\$ticket || \$ticket->isCloseable())
-    \$states[] = 'closed';";
-        $replace = "// Map states to actions
-\$actions= array(
-        'closed' => array(
-            'icon'  => 'icon-ok-circle',
-            'action' => 'close',
-            'href' => 'tickets.php'
-            ),
-        'open' => array(
-            'icon'  => 'icon-undo',
-            'action' => 'reopen'
-            ),
-        'suspended' => array(
-            'icon'  => 'icon-ok-circle',
-            'action' => 'suspended'
-            ),
-        );
-
-\$states = array('open');
-if (!\$ticket || \$ticket->isCloseable()){
-    \$states[] = 'closed';
-    \$states[] = 'suspended';
-}";
-        if(!$this->isPluginActive()){
-            if($this->isCodeAlreadyInserted(INCLUDE_DIR . "staff/templates/status-options.tmpl.php", $replace)) {
+        $checkCode = "require_once(INCLUDE_DIR.'plugins/sla_plugin/sla_plugin.php');";
+        if($this->isPluginActive()) {
+            if(!$this->isCodeAlreadyInserted(INCLUDE_DIR . 'class.ticket.php', $checkCode)) {
+                $this->replaceFile(INCLUDE_DIR . 'staff/templates/status-options.tmpl.php', 'status-options-modified.tmpl.php', 'status-options-backup.tmpl.php');
+                $this->status_options = true;
+            }
+        } else {
+            if($this->isCodeAlreadyInserted(INCLUDE_DIR . 'class.ticket.php', $checkCode)) {
                 $this->undo_status_options_patches();
             }
-            return;
         }
-        $this->applyPatch(INCLUDE_DIR . "staff/templates/status-options.tmpl.php", $this->patch_to($search, $replace));
-        $this->normalizeLineEndingsToCRLF(INCLUDE_DIR . "staff/templates/status-options.tmpl.php");
-        $this->status_options = true;
     }
     
     function undo_status_options_patches(){
-        $replace = "// Map states to actions
-\$actions= array(
-        'closed' => array(
-            'icon'  => 'icon-ok-circle',
-            'action' => 'close',
-            'href' => 'tickets.php'
-            ),
-        'open' => array(
-            'icon'  => 'icon-undo',
-            'action' => 'reopen'
-            ),
-        );
-
-\$states = array('open');
-if (!\$ticket || \$ticket->isCloseable())
-    \$states[] = 'closed';";
-        $search = "// Map states to actions
-\$actions= array(
-        'closed' => array(
-            'icon'  => 'icon-ok-circle',
-            'action' => 'close',
-            'href' => 'tickets.php'
-            ),
-        'open' => array(
-            'icon'  => 'icon-undo',
-            'action' => 'reopen'
-            ),
-        'suspended' => array(
-            'icon'  => 'icon-ok-circle',
-            'action' => 'suspended'
-            ),
-        );
-
-\$states = array('open');
-if (!\$ticket || \$ticket->isCloseable()){
-    \$states[] = 'closed';
-    \$states[] = 'suspended';
-}";
-        $this->applyPatch(INCLUDE_DIR . "staff/templates/status-options.tmpl.php", $this->patch_to($search, $replace));
-        $this->normalizeLineEndingsToCRLF(INCLUDE_DIR . "staff/templates/status-options.tmpl.php");
+        $this->restoreFile(INCLUDE_DIR . 'staff/templates/status-options.tmpl.php', 'backup_files/status-options-backup.tmpl.php');
         $this->status_options = false;
     }
     
@@ -819,6 +567,48 @@ if (!\$ticket || \$ticket->isCloseable()){
         }
     }
     
+//REPLACE,RESTORE,MOVE AND PATCH FUNCTIONS______________________________________________________________________________
+    function replaceFile($file_path, $modified_file_name, $backup_file_name) {
+        $modified_file_path = __DIR__ . '\modified_files' . '/' . $modified_file_name;
+        $backup_file_path = __DIR__ . '\backup_files' . '/' . $backup_file_name;
+
+        if (file_exists($file_path) && file_exists($modified_file_path)) {
+            $modified_content = file_get_contents($modified_file_path);
+
+            // Create the backup directory if it doesn't exist
+            if (!is_dir(__DIR__ . '\backup_files')) {
+                mkdir(__DIR__ . '\backup_files', 0755, true);
+            }
+
+            // Copy the original file to the backup directory
+            if (!copy($file_path, $backup_file_path)) {
+                error_log("Failed to create backup of $file_path at $backup_file_path!");
+            }
+
+            // Replace the original file with the modified content
+            file_put_contents($file_path, $modified_content);
+        } else {
+            if (!file_exists($file_path)) {
+                error_log("$file_path does not exist!");
+            }
+            if (!file_exists($modified_file_path)) {
+                error_log("$modified_file_path does not exist!");
+            }
+        }
+    }
+    
+    function restoreFile($file_path, $backup_path) {
+        $backup_file_path = __DIR__ . '\backup_files' . '/' . basename($backup_path);
+        
+        if (file_exists($backup_file_path)) {
+            copy($backup_file_path, $file_path);
+            // Delete the backup file after restoring
+            unlink($backup_file_path);
+        } else {
+            error_log("Backup file for $file_path does not exist!");
+        }
+    }
+    
     function insertCodeIntoFile($filePath, $newCode, $startPoint, $endPoint) {       
         $fileContent = file_get_contents($filePath);
         if ($fileContent === false) {
@@ -860,6 +650,7 @@ if (!\$ticket || \$ticket->isCloseable()){
 
         return true;
     }
+    //_____________________________________________________________________________________________________________________
 }
 
 $sla_plugin = new SLAPlugin();
