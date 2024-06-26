@@ -202,18 +202,18 @@ class SLAPlugin extends Plugin{
                     break;"
         );
         $replaces = array(
-            "case 'suspended':
+            "            case 'suspended':
                 \$state =  'suspended';
                 break;",
-            "case 'suspended':
+            "                case 'suspended':
                     if (!\$role->hasPerm(Ticket::PERM_CLOSE))
                         \$errors['err'] = sprintf(__('You do not have permission %s'),
                                 __('to suspend tickets'));
                     break;",
-            "case 'suspended':
+            "            case 'suspended':
                 \$state =  'suspended';
                 break;",
-            "case 'suspended':
+            "                case 'suspended':
                     if (!\$thisstaff->hasPerm(Ticket::PERM_CLOSE, false))
                         \$errors['err'] = sprintf(__('You do not have permission %s'),
                                 __('to suspend tickets'));
@@ -248,125 +248,271 @@ class SLAPlugin extends Plugin{
     }
 
     function class_ticket_list_of_patches(){
-        $file_path = INCLUDE_DIR . 'class.ticket.php';
-        $searches = array(
-            "require_once(INCLUDE_DIR.'class.faq.php');",
-            "const PERM_DELETE   = 'ticket.delete';",
-            "/* @trans */ 'Ability to delete tickets'),",
-            "function isClosed() {
-         return \$this->hasState('closed');
-    }",
-            "// Ticket Status helper.
-    function setStatus(\$status, \$comments='', &\$errors=array(), \$set_closing_agent=true, \$force_close=false) {
-        global \$cfg, \$thisstaff;
+        $filePath = INCLUDE_DIR . 'class.ticket.php';
+        $newCode = array(
+            'require_once(INCLUDE_DIR.\'plugins/sla_plugin/sla_plugin.php\');',
+            '    const PERM_SUSPEND   = \'ticket.suspend\';',
+            'self::PERM_SUSPEND => array(
+                \'title\' =>
+                /* @trans */ \'Suspend\',
+                \'desc\'  =>
+                /* @trans */ \'Ability to suspend tickets\'),
+            );',
+            '    }
+    
+            function isSuspended() {
+                return $this->hasState(\'suspended\');
+            }
+            ',
+            'switch ($status->getState()) {
+            case \'closed\':
+            case \'suspended\':
+                if (!($role->hasPerm(Ticket::PERM_CLOSE)))
+                    return false;
+                break;
+            case \'deleted\':
+                // XXX: intercept deleted status and do hard delete TODO: soft deletes
+                if ($role->hasPerm(Ticket::PERM_DELETE))
+                    return $this->delete($comments);
+                // Agent doesn\'t have permission to delete  tickets
+                return false;
+                break;
+            }
+        }
 
-        if (\$thisstaff && !(\$role=\$this->getRole(\$thisstaff)))
-            return false;
+        $hadStatus = $this->getStatusId();
+        if ($this->getStatusId() == $status->getId())
+            return true;
 
-        if ((!\$status instanceof TicketStatus)
-                && !(\$status = TicketStatus::lookup(\$status)))
-            return false;
-
-        // Double check permissions (when changing status)
-        if (\$role && \$this->getStatusId()) {
-            switch (\$status->getState()) {
-            case 'closed':",
-            "// Perform checks on the *new* status, _before_ the status changes
-        \$ecb = \$refer = null;
-        switch (\$status->getState()) {",
-            "\$refer = \$this->staff ?: \$thisstaff;
-                \$this->closed = \$this->lastupdate = SqlFunction::NOW();
-                if (\$thisstaff && \$set_closing_agent)
-                    \$this->staff = \$thisstaff;
-                // Clear overdue flags & due dates
-                \$this->clearOverdue(false);
-
-                \$ecb = function(\$t) use (\$status) {
-                    \$t->logEvent('closed', array('status' => array(\$status->getId(), \$status->getName())), null, 'closed');
-                    \$t->deleteDrafts();
-                };",
-            "if (\$this->isClosed()) {
-                    \$this->closed = null;
-                    \$this->lastupdate = \$this->reopened = SqlFunction::NOW();
-                    \$ecb = function (\$t) {
-                        \$t->logEvent('reopened', false, null, 'closed');
-                        // Set new sla duedate if any
-                        \$t->updateEstDueDate();
-                    };
-                }",
-            "function setState(\$state, \$alerts=false) {
-        switch (strtolower(\$state)) {"
-        );
-        $replaces = array(
-            "require_once(INCLUDE_DIR.'plugins/sla_plugin/sla_plugin.php');",
-            "const PERM_SUSPEND   = 'ticket.suspend';",
-            "self::PERM_SUSPEND => array(
-                'title' =>
-                /* @trans */ 'Suspend',
-                'desc'  =>
-                /* @trans */ 'Ability to suspend tickets'),",
-            "function isSuspended() {
-                return \$this->hasState('suspended');
-            }",
-            "case 'suspended':",
-            "case 'suspended':
-                if(\$this->isOpen()){
-                    \$sla_types = new sla_types();
-                    if(\$sla_types->check_if_schedule(\$this->getId()) === []){
-                        \$errors['err'] = \$closeable ?: sprintf(__('%s cannot be suspended due to SLA\'s schedule not existing'), __('This ticket'));
+        // Perform checks on the *new* status, _before_ the status changes
+        $ecb = $refer = null;
+        switch ($status->getState()) {
+            case \'suspended\':
+                if($this->isOpen()){
+                    $sla_types = new sla_types();
+                    if($sla_types->check_if_schedule($this->getId()) === []){
+                        $errors[\'err\'] = $closeable ?: sprintf(__(\'%s cannot be suspended due to SLAs schedule not existing\'), __(\'This ticket\'));
                     }
                     // Check if ticket is closeable
-                    \$closeable = \$force_close ? true : \$this->isCloseable();
-                    if (\$closeable !== true)
-                        \$errors['err'] = \$closeable ?: sprintf(__('%s cannot be suspended'), __('This ticket'));
+                    $closeable = $force_close ? true : $this->isCloseable();
+                    if ($closeable !== true)
+                        $errors[\'err\'] = $closeable ?: sprintf(__(\'%s cannot be suspended\'), __(\'This ticket\'));
 
-                    if (\$errors)
+                    if ($errors)
                         return false;
 
-                    \$refer = \$this->staff ?: \$thisstaff;
-                    \$this->suspended = \$this->lastupdate = SqlFunction::NOW();
+                    $refer = $this->staff ?: $thisstaff;
+                    $this->suspended = $this->lastupdate = SqlFunction::NOW();
 
-                    \$ecb = function(\$t) use (\$status) {
-                        \$t->logEvent('suspended', array('status' => array(\$status->getId(), \$status->getName())), null, 'suspended');
+                    $ecb = function($t) use ($status) {
+                        $t->logEvent(\'suspended\', array(\'status\' => array($status->getId(), $status->getName())), null, \'suspended\');
                     };
-                    \$sla_plugin = new SLAPlugin();
-                    \$sla_plugin->start_suspension(\$this->getId(), \$comments);
+                    $sla_plugin = new SLAPlugin();
+                    $sla_plugin->start_suspension($this->getId(), $comments);
                 }
-                break;",
-            "if(\$this->isSuspended()){
-                \$sla_plugin = new SLAPlugin();
-                    \$sla_plugin->end_suspension(\$this->getId());
-                    \$sla_plugin->close_suspension(\$this->getId());
+                break;
+            case \'closed\':
+                // Check if ticket is closeable
+                $closeable = $force_close ? true : $this->isCloseable();
+                if ($closeable !== true)
+                    $errors[\'err\'] = $closeable ?: sprintf(__(\'%s cannot be closed\'), __(\'This ticket\'));
+
+                if ($errors)
+                    return false;
+
+                $refer = $this->staff ?: $thisstaff;
+                $this->closed = $this->lastupdate = SqlFunction::NOW();
+                if ($thisstaff && $set_closing_agent)
+                    $this->staff = $thisstaff;
+                // Clear overdue flags & due dates
+                $this->clearOverdue(false);
+
+                $ecb = function($t) use ($status) {
+                    $t->logEvent(\'closed\', array(\'status\' => array($status->getId(), $status->getName())), null, \'closed\');
+                    $t->deleteDrafts();
+                };
+        if($this->isSuspended()){
+                $sla_plugin = new SLAPlugin();
+                    $sla_plugin->end_suspension($this->getId());
+                    $sla_plugin->close_suspension($this->getId());
                 }
-                if(\$this->isOpen()){
-                    \$sla_plugin = new SLAPlugin();
-                    \$sla_plugin->close_suspension(\$this->getId());
-                }",
-            "if(\$this->isSuspended()){
-                \$sla_plugin = new SLAPlugin();
-                    \$sla_plugin->end_suspension(\$this->getId());
-                }",
-            "case 'suspended':
-            return \$this->setStatus('suspended');"
+                if($this->isOpen()){
+                    $sla_plugin = new SLAPlugin();
+                    $sla_plugin->close_suspension($this->getId());
+                }
+                break;
+            case \'open\':
+                if ($this->isClosed() && $this->isReopenable()) {
+                    // Auto-assign to closing staff or the last respondent if the
+                    // agent is available and has access. Otherwise, put the ticket back
+                    // to unassigned pool.
+                    $dept = $this->getDept();
+                    $staff = $this->getStaff() ?: $this->getLastRespondent();
+                    $autoassign = (!$dept->disableReopenAutoAssign());
+                    if ($autoassign
+                            && $staff
+                            // Is agent on vacation ?
+                            && $staff->isAvailable()
+                            // Does the agent have access to dept?
+                            && $staff->canAccessDept($dept))
+                        $this->setStaffId($staff->getId());
+                    else
+                        $this->setStaffId(0); // Clear assignment
+                }
+
+                if ($this->isClosed()) {
+                    $this->closed = null;
+                    $this->lastupdate = $this->reopened = SqlFunction::NOW();
+                    $ecb = function ($t) {
+                        $t->logEvent(\'reopened\', false, null, \'closed\');
+                        // Set new sla duedate if any
+                        $t->updateEstDueDate();
+                    };
+                }
+        if($this->isSuspended()){
+                $sla_plugin = new SLAPlugin();
+                    $sla_plugin->end_suspension($this->getId());
+                }
+            ',
+            '        case \'suspended\':
+            return $this->setStatus(\'suspended\');
+        case \'open\':'
         );
-        return array('file_path' => $file_path, 'searches' => $searches, 'replaces' => $replaces);
+        $startPoint = array(
+            'require_once(INCLUDE_DIR.\'class.faq.php\');',
+            'const PERM_DELETE   = \'ticket.delete\';',
+            '/* @trans */ \'Ability to delete tickets\'),',
+            'return $this->hasState(\'closed\');',
+            'if ($role && $this->getStatusId()) {',
+            'switch (strtolower($state)) {'
+        );
+        $endPoint = array(
+            'class Ticket extends VerySimpleModel',
+            '    const FLAG_COMBINE_THREADS     = 0x0001;',
+            '    // Ticket Sources',
+            '    function isCloseable() {',
+            '                // If the ticket is not open then clear answered flag',
+            '            return $this->setStatus(\'open\');'
+        );
+        return array('filePath' => $filePath, 'newCode' => $newCode, 'startPoint' => $startPoint, 'endPoint' => $endPoint);
     }
     
     function do_class_ticket_patches(){
-        if(!$this->isPluginActive()){
-            $checkCode = "const PERM_SUSPEND   = 'ticket.suspend';";
+        $checkCode = "require_once(INCLUDE_DIR.'plugins/sla_plugin/sla_plugin.php');";
+        if($this->isPluginActive()) {
+            if(!$this->isCodeAlreadyInserted(INCLUDE_DIR . 'class.ticket.php', $checkCode)) {
+                $patches = $this->class_ticket_list_of_patches();
+                for ($i = 0; $i <= sizeof($patches['newCode'])-1; $i++) {
+                    $this->insertCodeIntoFile($patches['filePath'], $patches['newCode'][$i], $patches['startPoint'][$i], $patches['endPoint'][$i]);
+                }   
+            }
+        } else {
             if($this->isCodeAlreadyInserted(INCLUDE_DIR . 'class.ticket.php', $checkCode)) {
                 $this->undo_class_ticket_patches();
             }
-            return;
-        }
-        $patches = $this->class_ticket_list_of_patches();
-        foreach ($patches['searches'] as $index=>$search) {
-            if(!$this->isCodeAlreadyInserted($patches['file_path'], $patches['replaces'][$index])) {
-                $this->applyPatch($patches['file_path'], $this->patch_to($search, $search . "\n" . $patches['replaces'][$index]));
+        }  
+    }
+    
+    function class_ticket_list_of_unpatches(){
+        $filePath = INCLUDE_DIR . 'class.ticket.php';
+        $newCode = array(
+            ' ',
+            ' ',
+            '            );
+            ',
+            '    }
+            ',
+            '        switch ($status->getState()) {
+            case \'closed\':
+                if (!($role->hasPerm(Ticket::PERM_CLOSE)))
+                    return false;
+                break;
+            case \'deleted\':
+                // XXX: intercept deleted status and do hard delete TODO: soft deletes
+                if ($role->hasPerm(Ticket::PERM_DELETE))
+                    return $this->delete($comments);
+                // Agent doesn\'t have permission to delete  tickets
+                return false;
+                break;
             }
-        }   
-        $this->normalizeLineEndingsToCRLF($patches['file_path']);
+        }
+
+        $hadStatus = $this->getStatusId();
+        if ($this->getStatusId() == $status->getId())
+            return true;
+
+        // Perform checks on the *new* status, _before_ the status changes
+        $ecb = $refer = null;
+        switch ($status->getState()) {
+            case \'closed\':
+                // Check if ticket is closeable
+                $closeable = $force_close ? true : $this->isCloseable();
+                if ($closeable !== true)
+                    $errors[\'err\'] = $closeable ?: sprintf(__(\'%s cannot be closed\'), __(\'This ticket\'));
+
+                if ($errors)
+                    return false;
+
+                $refer = $this->staff ?: $thisstaff;
+                $this->closed = $this->lastupdate = SqlFunction::NOW();
+                if ($thisstaff && $set_closing_agent)
+                    $this->staff = $thisstaff;
+                // Clear overdue flags & due dates
+                $this->clearOverdue(false);
+
+                $ecb = function($t) use ($status) {
+                    $t->logEvent(\'closed\', array(\'status\' => array($status->getId(), $status->getName())), null, \'closed\');
+                    $t->deleteDrafts();
+                };
+                break;
+            case \'open\':
+                if ($this->isClosed() && $this->isReopenable()) {
+                    // Auto-assign to closing staff or the last respondent if the
+                    // agent is available and has access. Otherwise, put the ticket back
+                    // to unassigned pool.
+                    $dept = $this->getDept();
+                    $staff = $this->getStaff() ?: $this->getLastRespondent();
+                    $autoassign = (!$dept->disableReopenAutoAssign());
+                    if ($autoassign
+                            && $staff
+                            // Is agent on vacation ?
+                            && $staff->isAvailable()
+                            // Does the agent have access to dept?
+                            && $staff->canAccessDept($dept))
+                        $this->setStaffId($staff->getId());
+                    else
+                        $this->setStaffId(0); // Clear assignment
+                }
+
+                if ($this->isClosed()) {
+                    $this->closed = null;
+                    $this->lastupdate = $this->reopened = SqlFunction::NOW();
+                    $ecb = function ($t) {
+                        $t->logEvent(\'reopened\', false, null, \'closed\');
+                        // Set new sla duedate if any
+                        $t->updateEstDueDate();
+                    };
+                }
+                ',
+            '        case \'open\':'
+        );
+        $startPoint = array(
+            'require_once(INCLUDE_DIR.\'class.faq.php\');',
+            'const PERM_DELETE   = \'ticket.delete\';',
+            '/* @trans */ \'Ability to delete tickets\'),',
+            'return $this->hasState(\'closed\');',
+            'if ($role && $this->getStatusId()) {',
+            'switch (strtolower($state)) {'
+        );
+        $endPoint = array(
+            'class Ticket extends VerySimpleModel',
+            '    const FLAG_COMBINE_THREADS     = 0x0001;',
+            '    // Ticket Sources',
+            '    function isCloseable() {',
+            '                // If the ticket is not open then clear answered flag',
+            '            return $this->setStatus(\'open\');'
+        );
+        return array('filePath' => $filePath, 'newCode' => $newCode, 'startPoint' => $startPoint, 'endPoint' => $endPoint);
     }
     
     function undo_class_ticket_patches(){
@@ -382,7 +528,11 @@ class SLAPlugin extends Plugin{
         } else {
             error_log("Error while closing past suspensions: " . db_error());
         }
-        $this->restoreFile(INCLUDE_DIR . 'class.ticket.php', 'backup_files/class.ticket-backup.php');
+        
+        $unpatches = $this->class_ticket_list_of_unpatches();
+        for ($i = 0; $i <= sizeof($unpatches['newCode'])-1; $i++) {
+            $this->insertCodeIntoFile($unpatches['filePath'], $unpatches['newCode'][$i], $unpatches['startPoint'][$i], $unpatches['endPoint'][$i]);
+        }
     }
     
     function do_status_options_patches(){
@@ -667,6 +817,48 @@ if (!\$ticket || \$ticket->isCloseable()){
         } else {
             error_log("Error occurred during the backup creation. Error code: $result");
         }
+    }
+    
+    function insertCodeIntoFile($filePath, $newCode, $startPoint, $endPoint) {       
+        $fileContent = file_get_contents($filePath);
+        if ($fileContent === false) {
+            throw new Exception("Failed to read file at $filePath");
+        }
+
+        $startPos = strpos($fileContent, $startPoint);
+        if ($startPos === false) {
+            throw new Exception("Start point '$startPoint' not found in file $filePath");
+        }
+
+        $startPointEnd = $startPos + strlen($startPoint);
+
+        if ($endPoint === '') {
+            // If endPoint is an empty string, set endPos to the end of the file
+            $endPos = strlen($fileContent);
+        } else {
+            $endPos = strpos($fileContent, $endPoint, $startPos);
+            if ($endPos === false) {
+                throw new Exception("End point '$endPoint' not found in file $filePath");
+            }
+        }
+
+        $endPointStart = $endPos;
+
+        if ($newCode === '') {
+            $updatedContent = substr($fileContent, 0, $startPointEnd) 
+                . "\n"
+                . substr($fileContent, $endPointStart);              
+        } else {
+            $updatedContent = substr($fileContent, 0, $startPointEnd) 
+                . "\n" . $newCode . "\n"                             
+                . substr($fileContent, $endPointStart);              
+        }           
+
+        if (file_put_contents($filePath, $updatedContent) === false) {
+            throw new Exception("Failed to write updated content to file $filePath");
+        }
+
+        return true;
     }
 }
 
