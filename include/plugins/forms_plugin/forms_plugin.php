@@ -78,12 +78,6 @@ class FormsPlugin extends Plugin {
     
     function applyPatchToClassTicketFile() {
         $file_path = INCLUDE_DIR . 'class.ticket.php';
-        $backup_file_path = __DIR__ . '\backup_files' . '/class.ticket-backup.php';
-        
-        // Copy the original file to the backup directory
-        if (!copy($file_path, $backup_file_path)) {
-            error_log("Failed to create backup of $file_path at $backup_file_path!");
-        }
         
         $this->insertCodeIntoFile(
             $file_path, 
@@ -116,7 +110,14 @@ class FormsPlugin extends Plugin {
     }
     
     function replacePluginFile() {
-        $this->replaceFile(INCLUDE_DIR . 'staff/plugins.inc.php', 'plugins-modified.inc.php', 'plugins-backup.inc.php');
+        $file_path = INCLUDE_DIR . 'staff/plugins.inc.php';
+        
+        $this->insertCodeIntoFile(
+            $file_path, 
+            $this->classPluginPatch, 
+            '__(\'Are you sure you want to <b>disable</b> %s?\'),', 
+            ''
+        );
     }
     //____________________________________________________________________________________________________________
 
@@ -130,7 +131,32 @@ class FormsPlugin extends Plugin {
     }
     
     function restoreClassTicketFile() {
-        $this->restoreFile(INCLUDE_DIR . 'class.ticket.php', 'class.ticket-backup.php');
+        $file_path = INCLUDE_DIR . 'class.ticket.php';
+        
+        $this->insertCodeIntoFile(
+            $file_path, 
+            $this->classTicketRecover1,
+            'if ($this->hasFlag(self::FLAG_SEPARATE_THREADS))', 
+            '    function isMerged() {'
+        );
+        $this->insertCodeIntoFile(
+            $file_path, 
+            '',
+            'switch ($fid) {', 
+            '        case \'priority\':'
+        );
+        $this->insertCodeIntoFile(
+            $file_path, 
+            '',
+            '$fields[\'duedate\']  = array(\'type\'=>\'date\', \'required\'=>0, \'error\'=>__(\'Invalid date format - must be MM/DD/YY\'));', 
+            '            case \'api\':'
+        );
+        $this->insertCodeIntoFile(
+            $file_path, 
+            $this->classTicketRecover4,
+            'Misc::dbtime($vars[\'duedate\']));', 
+            '        if (!$ticket->save())'
+        );
     }
     
     function restoreOpenFile() {
@@ -138,7 +164,14 @@ class FormsPlugin extends Plugin {
     }
     
     function restorePluginFile() {
-        $this->restoreFile(INCLUDE_DIR . 'staff/plugins.inc.php', 'plugins-backup.inc.php');
+        $file_path = INCLUDE_DIR . 'staff/plugins.inc.php';
+        
+        $this->insertCodeIntoFile(
+            $file_path, 
+            $this->classPluginRestore, 
+            '__(\'Are you sure you want to <b>disable</b> %s?\'),', 
+            ''
+        );
     }
     //____________________________________________________________________________________________________________
     
@@ -211,17 +244,29 @@ class FormsPlugin extends Plugin {
             throw new Exception("Start point '$startPoint' not found in file $filePath");
         }
 
-        $endPos = strpos($fileContent, $endPoint, $startPos);
-        if ($endPos === false) {
-            throw new Exception("End point '$endPoint' not found in file $filePath");
+        $startPointEnd = $startPos + strlen($startPoint);
+
+        if ($endPoint === '') {
+            // If endPoint is an empty string, set endPos to the end of the file
+            $endPos = strlen($fileContent);
+        } else {
+            $endPos = strpos($fileContent, $endPoint, $startPos);
+            if ($endPos === false) {
+                throw new Exception("End point '$endPoint' not found in file $filePath");
+            }
         }
 
-        $startPointEnd = $startPos + strlen($startPoint);
         $endPointStart = $endPos;
 
-        $updatedContent = substr($fileContent, 0, $startPointEnd) 
-            . "\n" . $newCode . "\n"                             
-            . substr($fileContent, $endPointStart);              
+        if ($newCode === '') {
+            $updatedContent = substr($fileContent, 0, $startPointEnd) 
+                . "\n"
+                . substr($fileContent, $endPointStart);              
+        } else {
+            $updatedContent = substr($fileContent, 0, $startPointEnd) 
+                . "\n" . $newCode . "\n"                             
+                . substr($fileContent, $endPointStart);              
+        }           
 
         if (file_put_contents($filePath, $updatedContent) === false) {
             throw new Exception("Failed to write updated content to file $filePath");
@@ -229,7 +274,7 @@ class FormsPlugin extends Plugin {
 
         return true;
     }
-    
+
     function moveFileToDirectory($source, $destination) {
         if (!file_exists($source)) {
             return "Source file does not exist.";
@@ -468,6 +513,7 @@ class FormsPlugin extends Plugin {
             return false;
         }
     }
+    
     //_____________________________________________________________________________________________________________________
     
     //DATABASE AND BACKUP FUNCTIONS________________________________________________________________________________________
@@ -772,6 +818,67 @@ class FormsPlugin extends Plugin {
         }
         //________________________________________________________________________________
     '; 
+    
+    public $classTicketRecover1 = '            return \'separate\';
+        else
+            return \'visual\';
+        return \'visual\';
+    }
+    ';
+    
+    public $classTicketRecover4 = '    
+    ';
+    
+    public $classPluginPatch = '        _N(\'selected plugin\', \'selected plugins\', 2)); ?></font> 
+        </p>
+        <div>
+            <?php echo __(\'Queres fazer backup dos tickets criados durante o tempo de vida do Plugin?\'); ?>
+            <input type="checkbox" id="eraseDataCheckbox">
+        </div>
+        <hr style="margin-top:1em"/>
+        <p class="full-width">
+            <span class="buttons pull-left">
+                <input type="button" value="<?php echo __(\'No, Cancel\'); ?>" class="close">
+            </span>
+            <span class="buttons pull-right">
+                <input type="button" value="<?php echo __(\'Yes, Do it!\'); ?>" class="confirm" onclick="handleCheckbox()">
+            </span>
+         </p>
+        <div class="clear"></div>
+    </div>
+
+    <script>
+        function handleCheckbox() {
+            var checkbox = document.getElementById("eraseDataCheckbox");
+            if (!checkbox.checked) {
+                var xmlhttp = new XMLHttpRequest();
+                xmlhttp.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 200) {
+                        console.log(this.responseText);
+                    }
+                };
+                xmlhttp.open("GET", "erase_data.php", true);
+                xmlhttp.send();
+            }
+        }
+    </script>
+    ';
+    
+    public $classPluginRestore = '        _N(\'selected plugin\', \'selected plugins\', 2)); ?></font>    
+        </p>
+        <div><?php echo __(\'Please confirm to continue.\'); ?></div>
+        <hr style="margin-top:1em"/>
+        <p class="full-width">
+            <span class="buttons pull-left">
+                <input type="button" value="<?php echo __(\'No, Cancel\'); ?>" class="close">
+            </span>
+            <span class="buttons pull-right">
+                <input type="button" value="<?php echo __(\'Yes, Do it!\'); ?>" class="confirm">
+            </span>
+         </p>
+        <div class="clear"></div>
+    </div>';
+    
     //_____________________________________________________________________________________________________________________
 }
 $forms_plugin = new FormsPlugin();
