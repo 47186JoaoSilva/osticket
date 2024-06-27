@@ -235,13 +235,13 @@ class SLAPlugin extends Plugin{
     function class_ticket_list_of_unpatches(){
         $filePath = INCLUDE_DIR . 'class.ticket.php';
         $newCode = array(
-            ' ',
-            ' ',
+            '',
+            '',
             '            );
-            ',
+',
             '    }
-            ',
-            '        switch ($status->getState()) {
+',
+            '            switch ($status->getState()) {
             case \'closed\':
                 if (!($role->hasPerm(Ticket::PERM_CLOSE)))
                     return false;
@@ -312,7 +312,7 @@ class SLAPlugin extends Plugin{
                         $t->updateEstDueDate();
                     };
                 }
-                ',
+',
             '        case \'open\':'
         );
         $startPoint = array(
@@ -638,11 +638,11 @@ class SLAPlugin extends Plugin{
 
         if ($newCode === '') {
             $updatedContent = substr($fileContent, 0, $startPointEnd) 
-                . "\n"
+                . PHP_EOL . '' . PHP_EOL 
                 . substr($fileContent, $endPointStart);              
         } else {
             $updatedContent = substr($fileContent, 0, $startPointEnd) 
-                . "\n" . $newCode . "\n"                             
+                . PHP_EOL . $newCode . PHP_EOL                            
                 . substr($fileContent, $endPointStart);              
         }           
 
