@@ -1521,6 +1521,9 @@ class TicketsAjaxAPI extends AjaxController {
             case 'reopen':
                 $state = 'open';
                 break;
+            case 'suspended':
+                $state =  'suspended';
+                break;
             case 'close':
                 if (!$thisstaff->hasPerm(Ticket::PERM_CLOSE, false))
                     Http::response(403, 'Access denied');
