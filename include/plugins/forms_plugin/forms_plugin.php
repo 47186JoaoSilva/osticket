@@ -7,45 +7,45 @@ require_once(INCLUDE_DIR . 'class.dispatcher.php');
 class FormsPlugin extends Plugin {
     function bootstrap() {
         //Signal quando o plugin é ativado ou desativado
-        Signal::connect('model.updated', array($this, 'restoreOrReplaceFiles'));
-        Signal::connect('model.updated', array($this, 'moveOrRemoveFiles'));
         Signal::connect('model.updated', array($this, 'addOrDeleteColumnsFromTable'));
+        Signal::connect('model.updated', array($this, 'moveOrRemoveFiles'));
+        Signal::connect('model.updated', array($this, 'restoreOrReplaceFiles'));
         
         //Signal quando o plugin é apagado
-        Signal::connect('model.deleted', array($this, 'restoreOrReplaceFiles'));
-        Signal::connect('model.deleted', array($this, 'moveOrRemoveFiles'));
         Signal::connect('model.deleted', array($this, 'addOrDeleteColumnsFromTable')); 
+        Signal::connect('model.deleted', array($this, 'moveOrRemoveFiles'));
+        Signal::connect('model.deleted', array($this, 'restoreOrReplaceFiles'));
     }
     
     function restoreOrReplaceFiles() {
         if($this->isPluginActive()) {
-            if(!$this->doesColumnExist()) {
+            if(!$this->isCodeAlreadyInserted(INCLUDE_DIR . 'staff/plugins.inc.php', $this->classPluginPatch)) {
                 $this->replaceTicketOpenFile();
                 $this->replaceTicketViewFile();
                 $this->applyPatchToClassTicketFile();
                 $this->replaceOpenFile();
-                $this->replacePluginFile();
+                $this->applyPatchToPluginFile();
             }
         }
         else {
-            if($this->doesColumnExist()) {
+            if($this->isCodeAlreadyInserted(INCLUDE_DIR . 'staff/plugins.inc.php', $this->classPluginPatch)) {
+                $this->restorePluginFile();
                 $this->restoreTicketOpenFile();
                 $this->restoreTicketViewFile();
                 $this->restoreClassTicketFile();
                 $this->restoreOpenFile();
-                $this->restorePluginFile();
             }
         }
     }
     
     function moveOrRemoveFiles() {
         if($this->isPluginActive()) {
-            if(!$this->doesColumnExist()) {
+            if(!$this->isCodeAlreadyInserted(INCLUDE_DIR . 'staff/plugins.inc.php', $this->classPluginPatch)) {
                 $this->moveToNewDirectory();
             }
         }
         else {
-            if($this->doesColumnExist()) {
+            if($this->isCodeAlreadyInserted(INCLUDE_DIR . 'staff/plugins.inc.php', $this->classPluginPatch)) {
                 $this->moveToOriginalDirectory();
             }
         }
@@ -53,14 +53,14 @@ class FormsPlugin extends Plugin {
         
     function addOrDeleteColumnsFromTable() {
         if($this->isPluginActive()) {
-            if(!$this->doesColumnExist()) {
+            if(!$this->isCodeAlreadyInserted(INCLUDE_DIR . 'staff/plugins.inc.php', $this->classPluginPatch)) {
                 $this->addColumnsToTable();
                 $this->copyBackupIfExists();
             }
             $this->createBackupTables();
         }
         else {
-            if($this->doesColumnExist()) {
+            if($this->isCodeAlreadyInserted(INCLUDE_DIR . 'staff/plugins.inc.php', $this->classPluginPatch)) {
                 $this->deleteLinesFromTable();
                 $this->deleteColumnsFromTable();
             }
@@ -109,7 +109,7 @@ class FormsPlugin extends Plugin {
         $this->replaceFile(INCLUDE_DIR . 'client/open.inc.php', 'open-modified.inc.php', 'open-backup.inc.php');
     }
     
-    function replacePluginFile() {
+    function applyPatchToPluginFile() {
         $file_path = INCLUDE_DIR . 'staff/plugins.inc.php';
         
         $this->insertCodeIntoFile(
@@ -504,18 +504,13 @@ class FormsPlugin extends Plugin {
         }
     }
     
-    function doesColumnExist() {
-        $query = "SHOW COLUMNS FROM " . TABLE_PREFIX . "ticket LIKE 'cabinet_id'";
-
-        $result = db_query($query);
-
-        if ($result) {
-            $rowCount = db_num_rows($result);
-            return ($rowCount > 0); 
-        } else {
-            error_log("Error checking column existence in table " . TABLE_PREFIX . "ticket");
-            return false;
+    function isCodeAlreadyInserted($filePath, $codeSnippet) {
+        $fileContent = file_get_contents($filePath);
+        if ($fileContent === false) {
+            throw new Exception("Failed to read file at $filePath");
         }
+
+        return strpos($fileContent, $codeSnippet) !== false;
     }
     
     //_____________________________________________________________________________________________________________________
