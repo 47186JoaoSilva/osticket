@@ -141,13 +141,13 @@ class FormsPlugin extends Plugin {
         );
         $this->insertCodeIntoFile(
             $file_path, 
-            '',
+            ' ',
             'switch ($fid) {', 
             '        case \'priority\':'
         );
         $this->insertCodeIntoFile(
             $file_path, 
-            '',
+            ' ',
             '$fields[\'duedate\']  = array(\'type\'=>\'date\', \'required\'=>0, \'error\'=>__(\'Invalid date format - must be MM/DD/YY\'));', 
             '            case \'api\':'
         );
@@ -260,13 +260,17 @@ class FormsPlugin extends Plugin {
 
         if ($newCode === '') {
             $updatedContent = substr($fileContent, 0, $startPointEnd) 
-                . "\n"
+                . "\n" . '' . "\n"
+                . substr($fileContent, $endPointStart);              
+        } else if ($newCode === ' '){
+            $updatedContent = substr($fileContent, 0, $startPointEnd) 
+                . "\n"                           
                 . substr($fileContent, $endPointStart);              
         } else {
             $updatedContent = substr($fileContent, 0, $startPointEnd) 
-                . "\n" . $newCode . "\n"                             
+                . "\n" . $newCode . "\n"                            
                 . substr($fileContent, $endPointStart);              
-        }           
+        }        
 
         if (file_put_contents($filePath, $updatedContent) === false) {
             throw new Exception("Failed to write updated content to file $filePath");
@@ -824,10 +828,10 @@ class FormsPlugin extends Plugin {
             return \'visual\';
         return \'visual\';
     }
-    ';
+';
     
-    public $classTicketRecover4 = '    
-    ';
+    public $classTicketRecover4 = '
+';
     
     public $classPluginPatch = '        _N(\'selected plugin\', \'selected plugins\', 2)); ?></font> 
         </p>
@@ -864,20 +868,20 @@ class FormsPlugin extends Plugin {
     </script>
     ';
     
-    public $classPluginRestore = '        _N(\'selected plugin\', \'selected plugins\', 2)); ?></font>    
-        </p>
-        <div><?php echo __(\'Please confirm to continue.\'); ?></div>
-        <hr style="margin-top:1em"/>
-        <p class="full-width">
-            <span class="buttons pull-left">
-                <input type="button" value="<?php echo __(\'No, Cancel\'); ?>" class="close">
-            </span>
-            <span class="buttons pull-right">
-                <input type="button" value="<?php echo __(\'Yes, Do it!\'); ?>" class="confirm">
-            </span>
-         </p>
-        <div class="clear"></div>
-    </div>';
+    public $classPluginRestore = '        _N(\'selected plugin\', \'selected plugins\', 2)); ?></font>
+    </p>
+    <div><?php echo __(\'Please confirm to continue.\'); ?></div>
+    <hr style="margin-top:1em"/>
+    <p class="full-width">
+        <span class="buttons pull-left">
+            <input type="button" value="<?php echo __(\'No, Cancel\'); ?>" class="close">
+        </span>
+        <span class="buttons pull-right">
+            <input type="button" value="<?php echo __(\'Yes, Do it!\'); ?>" class="confirm">
+        </span>
+     </p>
+    <div class="clear"></div>
+</div>';
     
     //_____________________________________________________________________________________________________________________
 }
