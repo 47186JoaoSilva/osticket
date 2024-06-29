@@ -24,6 +24,7 @@ class FormsPlugin extends Plugin {
                 $this->replaceTicketViewFile();
                 $this->applyPatchToClassTicketFile();
                 $this->replaceOpenFile();
+                $this->replaceViewFile();
                 $this->applyPatchToPluginFile();
             }
         }
@@ -34,6 +35,7 @@ class FormsPlugin extends Plugin {
                 $this->restoreTicketViewFile();
                 $this->restoreClassTicketFile();
                 $this->restoreOpenFile();
+                $this->restoreViewFile();
             }
         }
     }
@@ -109,6 +111,10 @@ class FormsPlugin extends Plugin {
         $this->replaceFile(INCLUDE_DIR . 'client/open.inc.php', 'open-modified.inc.php');
     }
     
+    function replaceViewFile() {
+        $this->replaceFile(INCLUDE_DIR . 'client/view.inc.php', 'view-modified.inc.php');
+    }
+    
     function applyPatchToPluginFile() {
         $file_path = INCLUDE_DIR . 'staff/plugins.inc.php';
         
@@ -161,6 +167,10 @@ class FormsPlugin extends Plugin {
     
     function restoreOpenFile() {
         $this->restoreFile(INCLUDE_DIR . 'client/open.inc.php', 'open-backup.inc.php');
+    }
+    
+    function restoreViewFile() {
+        $this->restoreFile(INCLUDE_DIR . 'client/view.inc.php', 'view-backup.inc.php');
     }
     
     function restorePluginFile() {
