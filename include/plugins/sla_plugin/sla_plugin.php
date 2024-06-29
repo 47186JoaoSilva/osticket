@@ -35,15 +35,6 @@ class SLAPlugin extends Plugin{
         }
         return;
     }
-    
-    function isCodeAlreadyInserted($filePath, $codeSnippet) {
-        $fileContent = file_get_contents($filePath);
-        if ($fileContent === false) {
-            throw new Exception("Failed to read file at $filePath");
-        }
-
-        return strpos($fileContent, $codeSnippet) !== false;
-    }
 
 //AJAX TICKET CHANGES_____________________________________________________________________________________________________
     function do_ajax_tickets_patches(){
@@ -526,47 +517,14 @@ class SLAPlugin extends Plugin{
             return false;
         }
     }
-
-    function copyBackupIfExists() {
-        $dbHost = DBHOST; 
-        $dbUser = DBUSER; 
-        $dbPass = DBPASS; 
-        $dbName = DBNAME; 
-        $mysqlPath = 'C:/xampp/mysql/bin/mysql.exe';
-        $backupFile = INCLUDE_DIR . "plugins/forms_plugin/mysqldump/combined_backup.sql";
-
-        $restoreCommand = "$mysqlPath -h $dbHost -u $dbUser -p$dbPass $dbName < \"$backupFile\"";
-        system($restoreCommand, $result);
-
-        if ($result == 0) {
-            error_log("Backup restored successfully.");
-        } else {
-            error_log("Error occurred during the restoration process. Error code: $result");
+    
+    function isCodeAlreadyInserted($filePath, $codeSnippet) {
+        $fileContent = file_get_contents($filePath);
+        if ($fileContent === false) {
+            throw new Exception("Failed to read file at $filePath");
         }
 
-        if (unlink($backupFile)) {
-            error_log("Backup file combined_backup.sql deleted successfully.");
-        } else {
-            error_log("Error deleting backup file combined_backup.sql.");
-        }
-    }
-
-    static function createBackupTables() { 
-        $dbHost = DBHOST; 
-        $dbUser = DBUSER; 
-        $dbPass = DBPASS; 
-        $dbName = DBNAME; 
-        $mysqlDumpPath = 'C:/xampp/mysql/bin/mysqldump.exe';
-        $backupDir = INCLUDE_DIR . "plugins/sla_plugin/mysqldump/";
-
-        $backupCommand = "$mysqlDumpPath -h $dbHost -u $dbUser -p$dbPass $dbName ".TABLE_PREFIX."ticket_suspend_status_info > \"" . $backupDir . "sla_sus_info_backup.sql\"";
-        system($backupCommand, $result);
-
-        if ($result == 0) {
-            error_log("Backup files for ".TABLE_PREFIX."ticket_suspend_status_info successfully.");
-        } else {
-            error_log("Error occurred during the backup creation. Error code: $result");
-        }
+        return strpos($fileContent, $codeSnippet) !== false;
     }
     
 //REPLACE,RESTORE,MOVE AND PATCH FUNCTIONS______________________________________________________________________________
