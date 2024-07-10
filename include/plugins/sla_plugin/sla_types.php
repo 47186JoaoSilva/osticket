@@ -124,7 +124,11 @@ class sla_types {
         $hours = $suspension_time; 
         
         $slaDays = $this->list_sla_types[$slaName] ?? [];
-        for ($date = clone $begin; $date <= $end; $date->modify('+1 day')) {
+        $new_end = clone $end;
+        $new_end = $new_end->modify('+1 day');
+        $new_begin = clone $begin;
+        $new_begin = $new_begin->modify('+1 day');
+        for ($date = clone $new_begin; $date <= $new_end; $date->modify('+1 day')) {
             $dayName = strtolower($date->format('l'));
             if ($slaName === '24/7') {
                 $hours = $this->sla_24_7($hours, $begin, $end, $date, $begin_time_hour, $begin_time_minute, $end_time_hour, $end_time_minute, $time_diff);
@@ -148,7 +152,7 @@ class sla_types {
             if($begin->format('Y-m-d') === $end->format('Y-m-d')){
                 return $hours;
             }
-            if($date === $end){
+            if($date->format('Y-m-d') === $end->format('Y-m-d')){
                 if ($this->check_if_date_is_holiday($begin->format('d-m-Y'))) {
                     return $hours;
                 }
@@ -159,10 +163,10 @@ class sla_types {
         if($begin->format('Y-m-d') === $end->format('Y-m-d')){
             return $hours + $time_diff;
         }
-        if($date !== $begin && $date !== $end){
+        if($date->format('Y-m-d') !== $begin->format('Y-m-d') && $date->format('Y-m-d') !== $end->format('Y-m-d')){
             return $hours + 24;
         }
-        if($date === $end){
+        if($date->format('Y-m-d') === $end->format('Y-m-d')){
             return $hours + $end_time_hour + ($end_time_minute/60) + (24-($begin_time_hour + ($begin_time_minute/60)));
         }
         return $hours;
@@ -174,7 +178,7 @@ class sla_types {
             if($begin->format('Y-m-d') === $end->format('Y-m-d')){
                 return $hours;
             }
-            if($date === $end){
+            if($date->format('Y-m-d') === $end->format('Y-m-d')){
                 if ($this->check_if_date_is_holiday($begin->format('d-m-Y')) || !in_array(strtolower($begin->format('l')), $slaDays)) {
                     return $hours;
                 }
@@ -186,15 +190,15 @@ class sla_types {
             if($begin->format('Y-m-d') === $end->format('Y-m-d')){
                 return $hours + $time_diff;
             }
-            if($date !== $begin && $date !== $end){
+            if($date->format('Y-m-d') !== $begin->format('Y-m-d') && $date->format('Y-m-d') !== $end->format('Y-m-d')){
                 return $hours + 24;
             }
-            if($date === $end){
+            if($date->format('Y-m-d') === $end->format('Y-m-d')){
                 return $hours + $end_time_hour + ($end_time_minute/60) + (24-($begin_time_hour + ($begin_time_minute/60)));
             }  
         }
         else{
-            if($date === $end){
+            if($date->format('Y-m-d') === $end->format('Y-m-d')){
                 if ($this->check_if_date_is_holiday($begin->format('d-m-Y')) || !in_array(strtolower($begin->format('l')), $slaDays)) {
                     return $hours;
                 }
@@ -210,10 +214,10 @@ class sla_types {
             if($begin->format('Y-m-d') === $end->format('Y-m-d')){
                 return $hours + $time_diff;
             }
-            if($date !== $begin && $date !== $end){
+            if($date->format('Y-m-d') !== $begin->format('Y-m-d') && $date->format('Y-m-d') !== $end->format('Y-m-d')){
                return $hours + 24;
             }
-            if($date === $end){
+            if($date->format('Y-m-d') === $end->format('Y-m-d')){
                 if (!$this->check_if_date_is_holiday($begin->format('d-m-Y'))) {
                     return $hours + $end_time_hour + ($end_time_minute/60);
                 }
@@ -221,7 +225,7 @@ class sla_types {
             }
         }
         else{
-            if($date === $end){
+            if($date->format('Y-m-d') === $end->format('Y-m-d')){
                 if (!$this->check_if_date_is_holiday($begin->format('d-m-Y'))) {
                     return $hours;
                 }
@@ -237,10 +241,10 @@ class sla_types {
             if($begin->format('Y-m-d') === $end->format('Y-m-d')){
                 return $hours + $time_diff;
             }
-            if($date !== $begin && $date !== $end){
+            if($date->format('Y-m-d') !== $begin->format('Y-m-d') && $date->format('Y-m-d') !== $end->format('Y-m-d')){
                return $hours + 9;
             }
-            if($date === $end){
+            if($date->format('Y-m-d') === $end->format('Y-m-d')){
                 if (in_array(strtolower($begin->format('l')), $slaDays)) {
                     if($begin_time_hour < 8){
                         $hours += 9;
@@ -259,7 +263,7 @@ class sla_types {
             }
         }
         else{
-            if($date === $end){
+            if($date->format('Y-m-d') === $end->format('Y-m-d')){
                 if (in_array(strtolower($begin->format('l')), $slaDays)) {
                     if($begin_time_hour < 8){
                         $hours += 9;
