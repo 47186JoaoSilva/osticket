@@ -88,8 +88,6 @@ class DashboardPlugin extends Plugin {
         
         if (file_exists($backup_file_path)) {
             copy($backup_file_path, $file_path);
-            // Delete the backup file after restoring
-            //unlink($backup_file_path);
         } else {
             error_log("Backup file for $file_path does not exist!");
         }
